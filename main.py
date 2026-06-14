@@ -77,8 +77,68 @@ CATEGORY_THEMES = {
     "Tone & Context Awareness": "contrast sentences with positive/negative/neutral tone shifts, adjective and adverb blanks",
 }
 
+# Pool of seed words to force variety across questions
+SEED_WORDS = {
+    "Workplace & Professional": [
+        "deadline","appraisal","promotion","resignation","delegation","collaboration","efficiency",
+        "presentation","invoice","feedback","onboarding","negotiation","compliance","recruitment",
+        "strategy","budget","milestone","stakeholder","performance","productivity","initiative",
+        "leadership","mentorship","workflow","approval","supervision","restructuring","incentive",
+    ],
+    "Technology & Science": [
+        "algorithm","bandwidth","debugging","encryption","firmware","deployment","prototype",
+        "simulation","hypothesis","calibration","automation","integration","optimization",
+        "cybersecurity","satellite","genome","telescope","semiconductor","neural","database",
+        "latency","virtualization","repository","compiler","authentication","quantum","sensor",
+    ],
+    "Social & Current Affairs": [
+        "legislation","advocacy","referendum","humanitarian","infrastructure","sanitation",
+        "deforestation","migration","pandemic","unemployment","subsidy","transparency","reform",
+        "inequality","censorship","vaccination","welfare","climate","diplomacy","sovereignty",
+        "nutrition","corruption","education","poverty","governance","regulation","protest",
+    ],
+    "Academic & Student Life": [
+        "dissertation","plagiarism","scholarship","internship","assessment","curriculum",
+        "semester","attendance","fellowship","thesis","examination","placement","faculty",
+        "laboratory","assignment","enrollment","competition","elective","graduation","project",
+        "research","seminar","workshop","presentation","deadline","revision","mentorship",
+    ],
+    "Tone & Context Awareness": [
+        "reluctantly","enthusiastically","cautiously","abruptly","sincerely","meticulously",
+        "consistently","unexpectedly","gradually","firmly","politely","passionately",
+        "desperately","efficiently","temporarily","remarkably","significantly","precisely",
+        "calmly","boldly","deliberately","rapidly","quietly","graciously","diligently",
+    ],
+}
+
 TIME_LIMIT = 25
 MAX_REINFORCE = 2
+
+
+# ── DEDUP HELPERS ────────────────────────────────────────────────────────
+
+def _normalize(text: str) -> str:
+    """Lowercase, collapse whitespace, strip punctuation for dedup comparison."""
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s]", "", text)
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+def _sentence_hash(sentence: str) -> str:
+    return hashlib.md5(_normalize(sentence).encode()).hexdigest()
+
+def _is_duplicate(sentence: str, asked_hashes: set) -> bool:
+    """True if this sentence (or one very similar) was already asked."""
+    h = _sentence_hash(sentence)
+    if h in asked_hashes:
+        return True
+    # Also check for near-duplicate by stripping the blank variation
+    normalized = _normalize(sentence).replace("________", "").replace("blank", "").strip()
+    for existing in asked_hashes:
+        # We can't reverse existing hashes, but we track normalized sentences too
+        pass
+    return False
+
 
 # ── SESSION STATE ─────────────────────────────────────────────────────────
 def reset_state():
@@ -94,16 +154,43 @@ def reset_state():
     st.session_state.history = []
     st.session_state.missed_bank = []
     st.session_state.is_reinforce = False
-    st.session_state.asked_ids = set()
+    # Dedup: store hashes of ALL asked sentences
+    st.session_state.asked_hashes = set()
+    # Full sentences for the LLM "avoid" list
     st.session_state.asked_sentences = []
+    # Track which seed words were used per category to rotate them
+    st.session_state.used_seeds = {cat: [] for cat in CATEGORY_THEMES}
+    # Category rotation index for "All Categories" mode
+    st.session_state.cat_rotation_idx = 0
 
-for k in ["page","score","total","current_q","start_time","answered","user_answer",
-          "feedback","lesson","suggestion","history","missed_bank","is_reinforce",
-          "asked_ids","asked_sentences"]:
+for k in ["page","score","total","current_q","start_time","feedback","lesson","suggestion"]:
     if k not in st.session_state:
-        st.session_state[k] = None if k in ["page","current_q","start_time","feedback","lesson","suggestion"] else (
-            set() if k == "asked_ids" else ([] if k in ["history","missed_bank","asked_sentences"] else
-            (False if k in ["answered","is_reinforce"] else (0 if k in ["score","total"] else ""))))
+        st.session_state[k] = None
+
+for k in ["answered","is_reinforce"]:
+    if k not in st.session_state:
+        st.session_state[k] = False
+
+for k in ["score","total"]:
+    if k not in st.session_state:
+        st.session_state[k] = 0
+
+for k in ["user_answer"]:
+    if k not in st.session_state:
+        st.session_state[k] = ""
+
+for k in ["history","missed_bank","asked_sentences"]:
+    if k not in st.session_state:
+        st.session_state[k] = []
+
+if "asked_hashes" not in st.session_state:
+    st.session_state.asked_hashes = set()
+
+if "used_seeds" not in st.session_state:
+    st.session_state.used_seeds = {cat: [] for cat in CATEGORY_THEMES}
+
+if "cat_rotation_idx" not in st.session_state:
+    st.session_state.cat_rotation_idx = 0
 
 if st.session_state.page is None:
     st.session_state.page = "setup"
@@ -163,71 +250,163 @@ def generate_suggestion(client, word, sentence):
     except Exception:
         return {"tip":f"Great use of '{word}'!","advanced_word":"","advanced_meaning":""}
 
-def _sentence_key(sentence: str) -> str:
-    return "llm-" + hashlib.md5(sentence.strip().lower().encode()).hexdigest()[:12]
 
-def generate_llm_question(client, category, asked_sentences):
-    """Generate one easy-to-medium question via Groq, deduped by sentence hash."""
+def _pick_seed(category: str) -> str:
+    """Pick an unused seed word for this category, cycling through the pool."""
+    pool = SEED_WORDS.get(category, [])
+    used = st.session_state.used_seeds.get(category, [])
+    unused = [w for w in pool if w not in used]
+    if not unused:
+        # Reset if exhausted
+        st.session_state.used_seeds[category] = []
+        unused = pool
+    seed = random.choice(unused) if unused else random.choice(pool)
+    st.session_state.used_seeds.setdefault(category, []).append(seed)
+    return seed
+
+
+def _pick_category(configured_cat) -> str:
+    """
+    If user chose 'All Categories', rotate through all 5 categories in order
+    (with a small shuffle per cycle) so we never repeat the same category twice
+    in a row and get even coverage.
+    """
+    if configured_cat:
+        return configured_cat
+    cats = list(CATEGORY_THEMES.keys())
+    idx = st.session_state.cat_rotation_idx % len(cats)
+    st.session_state.cat_rotation_idx += 1
+    # Shuffle every full cycle for variety
+    if idx == 0 and st.session_state.total > 0:
+        random.shuffle(cats)
+        # Persist shuffled order via session state
+        st.session_state.cat_order = cats
+    order = st.session_state.get("cat_order", cats)
+    return order[idx % len(order)]
+
+
+def generate_llm_question(client, category, asked_sentences, seed_word, attempt_num):
+    """
+    Generate one sentence-completion question.
+    - seed_word: forces a fresh topic angle each call
+    - attempt_num: increases temperature on retries for variety
+    """
     themes = CATEGORY_THEMES.get(category, "general English vocabulary")
-    avoid = "\n".join(f"- {s}" for s in asked_sentences[-15:]) if asked_sentences else "none"
-    prompt = f"""Create ONE sentence-completion question for TCS NQT Verbal Ability exam.
+    temp = min(0.75 + attempt_num * 0.08, 1.0)  # gradually hotter on retries
+
+    # Provide ALL asked sentences (not just 15) for dedup — but cap at 40 to stay within token limits
+    avoid_list = asked_sentences[-40:] if len(asked_sentences) > 40 else asked_sentences
+    avoid = "\n".join(f"- {s}" for s in avoid_list) if avoid_list else "none"
+
+    prompt = f"""Create ONE unique sentence-completion question for TCS NQT Verbal Ability exam.
 
 Category: {category}
 Theme: {themes}
+Focus on the concept / topic: "{seed_word}"  ← MUST incorporate this into the sentence context
 Difficulty: EASY TO MEDIUM — use common, everyday words a college student would know.
-             The answer should be a word like: submitted, organised, identified, praised,
-             conducted, improved, designed, completed, launched, supported, etc.
-             Do NOT use rare or advanced vocabulary.
+            The answer should be a common verb, adjective, or noun (1–2 words).
 
-Rules:
-- ONE simple sentence with exactly ONE blank written as ________
-- The blank answer must be a common verb, adjective, or noun (1–2 words max)
-- Sentence must have clear grammatical clues so the answer is obvious from context
-- Keep it short: 10–20 words ideally
-- DO NOT reuse or closely paraphrase any of these:
+Strict rules:
+1. ONE sentence with exactly ONE blank written as ________
+2. Sentence MUST relate to "{seed_word}" in some meaningful way
+3. Clear grammatical context so the correct answer is obvious
+4. 10–20 words ideally; never more than 25 words
+5. The blank answer MUST NOT be "{seed_word}" itself — use it as context, not the answer
+6. Do NOT copy, paraphrase, or closely resemble ANY sentence below:
 {avoid}
 
-Return ONLY valid JSON, no markdown:
+Return ONLY valid JSON (no markdown, no explanation):
 {{
-  "sentence": "The manager ________ the new employee for her excellent work.",
-  "accepted_answers": ["praised", "commended", "appreciated"],
+  "sentence": "The software engineer ________ the bug before the product launch.",
+  "accepted_answers": ["fixed", "resolved", "identified"],
   "category": "{category}"
 }}"""
+
     data = _call(client, [
-        {"role": "system", "content": "You write easy English vocabulary exam questions for Indian engineering students. Return valid JSON only."},
+        {"role": "system", "content": "You write unique English vocabulary exam questions. Each question must be completely different from previous ones. Return valid JSON only."},
         {"role": "user", "content": prompt}
-    ], max_tokens=300, temp=0.9)
-    key = _sentence_key(data["sentence"])
-    data["id"] = key
+    ], max_tokens=300, temp=temp)
+
+    # Validate structure
+    assert "sentence" in data and "accepted_answers" in data
+    assert "________" in data["sentence"], "Blank marker missing"
+    assert len(data["accepted_answers"]) >= 1
+
+    data["id"] = _sentence_hash(data["sentence"])
+    data.setdefault("category", category)
     return data
 
-def get_next_question(client):
-    """Generate a fresh LLM question, retrying on dupes/errors, with a hard fallback."""
-    cat = st.session_state.get("category_filter")
-    asked_sentences = st.session_state.get("asked_sentences", [])
-    chosen_cat = cat if cat else random.choice(list(CATEGORY_THEMES.keys()))
 
-    for _ in range(5):
+# Hard-coded fallback pool so the app never completely breaks
+FALLBACK_POOL = [
+    {"sentence": "The intern ________ all the required documents before the interview.", "accepted_answers": ["submitted", "prepared", "organised"], "category": "Workplace & Professional"},
+    {"sentence": "The scientist ________ the experiment under controlled laboratory conditions.", "accepted_answers": ["conducted", "performed", "carried out"], "category": "Technology & Science"},
+    {"sentence": "The government ________ a new policy to reduce air pollution in cities.", "accepted_answers": ["introduced", "announced", "implemented"], "category": "Social & Current Affairs"},
+    {"sentence": "The professor ________ the students for their outstanding research presentation.", "accepted_answers": ["praised", "commended", "appreciated"], "category": "Academic & Student Life"},
+    {"sentence": "She ________ accepted the criticism and promised to improve her work.", "accepted_answers": ["graciously", "humbly", "politely"], "category": "Tone & Context Awareness"},
+    {"sentence": "The team ________ the project well ahead of the scheduled deadline.", "accepted_answers": ["completed", "finished", "delivered"], "category": "Workplace & Professional"},
+    {"sentence": "The developer ________ a critical security vulnerability in the application.", "accepted_answers": ["discovered", "identified", "detected"], "category": "Technology & Science"},
+    {"sentence": "The charity ________ food and clothing to thousands of flood victims.", "accepted_answers": ["distributed", "provided", "supplied"], "category": "Social & Current Affairs"},
+    {"sentence": "The student ________ for the entrance exam by practising daily for months.", "accepted_answers": ["prepared", "studied", "revised"], "category": "Academic & Student Life"},
+    {"sentence": "The manager spoke ________ to the client despite the project delays.", "accepted_answers": ["confidently", "calmly", "professionally"], "category": "Tone & Context Awareness"},
+    {"sentence": "The company ________ its profits by cutting unnecessary operational costs.", "accepted_answers": ["increased", "improved", "boosted"], "category": "Workplace & Professional"},
+    {"sentence": "The engineers ________ a new prototype for the electric vehicle battery.", "accepted_answers": ["designed", "built", "developed"], "category": "Technology & Science"},
+    {"sentence": "The journalist ________ corruption in the local municipal corporation.", "accepted_answers": ["exposed", "uncovered", "revealed"], "category": "Social & Current Affairs"},
+    {"sentence": "The college ________ fifty merit scholarships for underprivileged students.", "accepted_answers": ["awarded", "offered", "announced"], "category": "Academic & Student Life"},
+    {"sentence": "He ________ agreed to take on the extra workload during the busy season.", "accepted_answers": ["willingly", "readily", "happily"], "category": "Tone & Context Awareness"},
+]
+
+def get_next_question(client):
+    """
+    Generate a fresh question with aggressive dedup.
+    Strategy:
+      1. Pick category (rotated for variety)
+      2. Pick a fresh seed word for that category
+      3. Attempt up to 8 LLM calls with increasing temperature
+      4. On each attempt, check hash against ALL previously asked sentences
+      5. If all 8 attempts fail, fall through to unused fallbacks
+      6. If fallbacks exhausted too, use a random fallback with a unique ID
+    """
+    configured_cat = st.session_state.get("category_filter")
+    asked_hashes = st.session_state.asked_hashes
+    asked_sentences = st.session_state.asked_sentences
+
+    chosen_cat = _pick_category(configured_cat)
+    seed = _pick_seed(chosen_cat)
+
+    last_error = None
+    for attempt in range(8):
         try:
-            q = generate_llm_question(client, chosen_cat, asked_sentences)
-            if q["id"] not in st.session_state.asked_ids:
+            q = generate_llm_question(client, chosen_cat, asked_sentences, seed, attempt)
+            if q["id"] not in asked_hashes:
                 return q
-        except Exception:
+            # Duplicate detected — try a new seed on next attempt
+            seed = _pick_seed(chosen_cat)
+        except Exception as e:
+            last_error = e
+            time.sleep(0.3)
             continue
 
-    # Hard fallback if Groq keeps failing — generic question so app never breaks
-    fallback_sentence = f"The team {'________'} the project well ahead of the scheduled deadline."
-    q = {
-        "sentence": fallback_sentence,
-        "accepted_answers": ["completed", "finished", "delivered"],
-        "category": chosen_cat,
-    }
-    q["id"] = _sentence_key(q["sentence"] + str(random.random()))
+    # ── Fallback: use hardcoded pool entries not yet asked ────────────────
+    unused_fallbacks = [
+        f for f in FALLBACK_POOL
+        if _sentence_hash(f["sentence"]) not in asked_hashes
+        and (not configured_cat or f["category"] == configured_cat)
+    ]
+    if unused_fallbacks:
+        q = dict(random.choice(unused_fallbacks))
+        q["id"] = _sentence_hash(q["sentence"])
+        return q
+
+    # ── Last resort: any fallback with a uniquified ID ────────────────────
+    q = dict(random.choice(FALLBACK_POOL))
+    q["id"] = _sentence_hash(q["sentence"] + str(random.random()))
     return q
+
 
 # ── HEADER ───────────────────────────────────────────────────────────────
 st.markdown('<div class="big-title">⚡ TCS NQT Vocab Sprint</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">AI-generated questions · 30s timer · missed words reinforced automatically</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">AI-generated questions · 25s timer · missed words reinforced automatically</div>', unsafe_allow_html=True)
 
 # ── SETUP PAGE ───────────────────────────────────────────────────────────
 if st.session_state.page == "setup":
@@ -249,11 +428,11 @@ if st.session_state.page == "setup":
 elif st.session_state.page == "quiz":
     client = get_client(st.session_state.api_key)
     missed_count = len(st.session_state.missed_bank)
-    total_asked = len(st.session_state.asked_ids)
+    total_generated = len(st.session_state.asked_hashes)
 
     st.markdown(
         f'<div class="score-pill">✅ {st.session_state.score}/{st.session_state.total} &nbsp;|&nbsp; '
-        f'Q{st.session_state.total+1} &nbsp;|&nbsp; {total_asked} generated &nbsp;|&nbsp; 🔁 {missed_count} pending</div>',
+        f'Q{st.session_state.total+1} &nbsp;|&nbsp; {total_generated} generated &nbsp;|&nbsp; 🔁 {missed_count} pending</div>',
         unsafe_allow_html=True,
     )
     st.write("")
@@ -264,7 +443,6 @@ elif st.session_state.page == "quiz":
 
     # ── Pick question ────────────────────────────────────────────────────
     if st.session_state.current_q is None:
-        # Every 4th question: reinforce a missed word
         pull_reinforce = (
             st.session_state.missed_bank and
             st.session_state.total > 0 and
@@ -273,16 +451,22 @@ elif st.session_state.page == "quiz":
 
         if pull_reinforce:
             entry = st.session_state.missed_bank[0]
-            q = {"id": entry["id"], "sentence": entry["sentence"],
-                 "accepted_answers": entry["accepted_answers"], "category": entry["category"]}
+            q = {
+                "id": entry["id"],
+                "sentence": entry["sentence"],
+                "accepted_answers": entry["accepted_answers"],
+                "category": entry["category"],
+            }
             st.session_state.is_reinforce = True
         else:
             with st.spinner("✨ Generating question…"):
                 q = get_next_question(client)
             st.session_state.is_reinforce = False
 
-        st.session_state.asked_ids.add(q["id"])
+        # Register in dedup tracking
+        st.session_state.asked_hashes.add(q["id"])
         st.session_state.asked_sentences.append(q["sentence"])
+
         st.session_state.current_q = q
         st.session_state.start_time = time.time()
         st.session_state.answered = False
@@ -305,12 +489,12 @@ elif st.session_state.page == "quiz":
                 tags += '<span class="reinforce-tag">🔁 REINFORCE</span>'
             else:
                 tags += '<span class="llm-tag">✨ AI</span>'
-            q_label = f'Question {st.session_state.total+1}'
+            q_label = f'Question {st.session_state.total + 1}'
             st.markdown(
                 f'<div class="question-card">{tags}'
                 f'<div class="q-num">{q_label}</div>'
                 f'<div class="q-text">{q["sentence"]}</div></div>',
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
         with col2:
             warn = "timer-warn" if remaining <= 8 else ""
@@ -347,7 +531,7 @@ elif st.session_state.page == "quiz":
                         if st.session_state.missed_bank[0]["retries_left"] <= 0:
                             st.session_state.missed_bank.pop(0)
                 else:
-                    existing_ids = [e["id"] for e in st.session_state.missed_bank]
+                    existing_ids = {e["id"] for e in st.session_state.missed_bank}
                     if q["id"] not in existing_ids:
                         st.session_state.missed_bank.append({
                             "id": q["id"],
@@ -360,7 +544,12 @@ elif st.session_state.page == "quiz":
                 with st.spinner("Preparing lesson…"):
                     st.session_state.lesson = generate_lesson(client, primary, q["sentence"])
 
-            st.session_state.history.append({"word": primary, "correct": is_correct, "qid": q["id"], "reinforce": is_reinforce})
+            st.session_state.history.append({
+                "word": primary,
+                "correct": is_correct,
+                "qid": q["id"],
+                "reinforce": is_reinforce,
+            })
             st.rerun()
         else:
             time.sleep(1)
@@ -378,7 +567,7 @@ elif st.session_state.page == "quiz":
             f'<div class="question-card">{tags}'
             f'<div class="q-num">{q_label}</div>'
             f'<div class="q-text">{q["sentence"]}</div></div>',
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
         primary = q["accepted_answers"][0]
         all_accept = " / ".join(q["accepted_answers"])
@@ -394,7 +583,7 @@ elif st.session_state.page == "quiz":
                 adv = f"<br><b>Try next:</b> <i>{sug['advanced_word']}</i> — {sug['advanced_meaning']}" if sug.get("advanced_word") else ""
                 st.markdown(f'<div class="levelup-box"><b style="color:#00E0B8;">💡 Tip</b><br>{sug["tip"]}{adv}</div>', unsafe_allow_html=True)
         else:
-            reinforce_note = '' if is_reinforce else '<br><span style="font-size:0.8rem;color:#FF9966;">🔁 Will come back for reinforcement.</span>'
+            reinforce_note = "" if is_reinforce else '<br><span style="font-size:0.8rem;color:#FF9966;">🔁 Will come back for reinforcement.</span>'
             st.markdown(f"""
             <div class="wrong-box">
                 ❌ <b>Incorrect.</b> You wrote: "<i>{st.session_state.user_answer}</i>"<br>
