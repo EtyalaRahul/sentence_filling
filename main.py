@@ -1723,3 +1723,11 @@ elif st.session_state.page == "summary":
         if st.button("⚙️ New Setup"):
             st.session_state.page = "setup"
             st.rerun()
+st.markdown("""
+<hr>
+<div style="text-align:center; padding:10px;">
+    <span style="color:#00E0B8; font-weight:bold;">
+        🚀 Designed & Developed by Rahul Etyala
+    </span>
+</div>
+""", unsafe_allow_html=True)
