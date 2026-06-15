@@ -94,15 +94,15 @@ html, body, [class*="css"] { font-family: 'IBM Plex Mono', monospace; }
 """, unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════
-#  CONSTANTS — TCS NQT EXACT SPECS
+#  CONSTANTS — TCS NQT EXACT SPECS (from official image)
 # ═══════════════════════════════════════════════════════════════════════════
 
-READ_TIME   = 30    # seconds to read passage (TCS spec)
-WRITE_TIME  = 90    # seconds to reconstruct passage (TCS spec)
-TIME_LIMIT  = 25    # seconds for sentence completion (TCS spec)
-EMAIL_TIME  = 540   # seconds for email writing = 9 minutes (TCS spec)
-EMAIL_MIN_WORDS = 100  # minimum words for email (TCS spec)
-MAX_REINFORCE = 2
+READ_TIME        = 30    # 30s read (TCS spec)
+WRITE_TIME       = 90    # 90s write (TCS spec)
+TIME_LIMIT       = 25    # 25s per sentence completion (TCS spec)
+EMAIL_TIME       = 540   # 9 minutes email writing (TCS spec)
+EMAIL_MIN_WORDS  = 100   # minimum 100 words (TCS spec)
+MAX_REINFORCE    = 2
 
 CATEGORY_FILTER = {
     "All Categories": None,
@@ -114,16 +114,16 @@ CATEGORY_FILTER = {
 }
 
 CATEGORY_THEMES = {
-    "Workplace & Professional": "office tasks, appraisals, team meetings, client communication, corporate decisions",
-    "Technology & Science": "AI research, software engineering, space missions, cybersecurity, scientific discoveries",
-    "Social & Current Affairs": "government policy, climate change, social justice, media, public health",
-    "Academic & Student Life": "exams, internships, research papers, campus life, faculty, placements",
-    "Tone & Context Awareness": "contrast sentences with positive/negative/neutral tone shifts, adjective and adverb blanks",
+    "Workplace & Professional": "office tasks, appraisals, team meetings, client communication, corporate decisions, project management, HR processes, business strategy",
+    "Technology & Science": "AI research, software engineering, space missions, cybersecurity, scientific discoveries, data science, cloud computing, robotics",
+    "Social & Current Affairs": "government policy, climate change, social justice, media, public health, elections, economy, environment, urban development",
+    "Academic & Student Life": "exams, internships, research papers, campus life, faculty, placements, scholarships, competitions, student projects",
+    "Tone & Context Awareness": "contrast sentences with positive/negative/neutral tone shifts, adjective and adverb blanks, formal vs informal register",
 }
 
 PASSAGE_CATEGORIES = list(CATEGORY_THEMES.keys())
 
-# ── 100-200 seed words per category ────────────────────────────────────────
+# ── 100+ seed words per category for sentence completion generation ─────
 SEED_WORDS = {
     "Workplace & Professional": [
         "deadline","appraisal","promotion","resignation","delegation","collaboration","efficiency",
@@ -148,7 +148,7 @@ SEED_WORDS = {
         "revenue","review","risk","roadmap","schedule","shortlisting","skillset","staffing",
         "succession","survey","sustainability","target","teamwork","tenure","termination",
         "timeline","training","transfer","transparency","turnaround","upskilling","vendor",
-        "vision","workload","workshop","SLA","roster","rotation",
+        "vision","workload","workshop","SLA","roster","rotation","performance-review","exit-interview",
     ],
     "Technology & Science": [
         "algorithm","bandwidth","debugging","encryption","firmware","deployment","prototype",
@@ -169,7 +169,7 @@ SEED_WORDS = {
         "research","robotics","runtime","scalability","schema","scripting","security","server",
         "signal","software","spectrum","stack","storage","streaming","syntax","testing",
         "thread","topology","transaction","transmission","update","validation","variable",
-        "version-control","vulnerability","wavelength","wireless","machine-learning","API",
+        "version-control","vulnerability","wavelength","wireless","microprocessor","overclocking",
     ],
     "Social & Current Affairs": [
         "legislation","advocacy","referendum","humanitarian","infrastructure","sanitation",
@@ -193,8 +193,6 @@ SEED_WORDS = {
         "parliament","peacekeeping","polarization","policy","pollution","population","privilege",
         "propaganda","public-health","racism","recession","reconciliation","rehabilitation",
         "religion","representation","resilience","rights","rural","secularism","segregation",
-        "social-media","strike","suffrage","surveillance","sustainable","taxation","terrorism",
-        "treaty","urbanization","violence","xenophobia",
     ],
     "Academic & Student Life": [
         "dissertation","plagiarism","scholarship","internship","assessment","curriculum",
@@ -215,7 +213,6 @@ SEED_WORDS = {
         "registration","report","result","review","schedule","session","skill","study",
         "subject","submission","syllabus","talent","task","teacher","team","test","textbook",
         "theory","timetable","topic","training","transcript","tutorial","university","viva",
-        "vocabulary","writing","scholarship","internship",
     ],
     "Tone & Context Awareness": [
         "reluctantly","enthusiastically","cautiously","abruptly","sincerely","meticulously",
@@ -240,61 +237,103 @@ SEED_WORDS = {
         "sensibly","sharply","skillfully","slowly","smoothly","softly","spontaneously",
         "sternly","stubbornly","subtly","suddenly","swiftly","tactfully","thoughtfully",
         "timidly","transparently","trustworthily","urgently","vaguely","vigorously",
-        "warmly","wisely","zealously",
+        "warmly","wisely","zealously","impulsively","attentively","scrupulously",
     ],
 }
 
-# ── Email scenario templates for variety ────────────────────────────────
-EMAIL_SCENARIOS = [
-    {
-        "situation": "Your team's project deadline has been moved up by one week without prior notice. Your manager has sent an email saying all deliverables must be submitted by Friday. You are concerned this is not feasible as two team members are on approved leave and a key dependency is still pending from another department.",
-        "task": "Write an email to your manager explaining the challenges with the new deadline, providing specific reasons why it may not be achievable, and proposing a realistic alternative timeline or solution.",
-        "to": "Your Manager",
-        "subject_hint": "Concern Regarding Revised Project Deadline",
-    },
-    {
-        "situation": "You attended a job interview last week at a reputed IT company for a Software Engineer role. The interviewer mentioned that results would be communicated within five working days. It has now been eight days and you have not received any response. You remain very interested in the position.",
-        "task": "Write a follow-up email to the HR department politely enquiring about the status of your application and reiterating your interest in the role.",
-        "to": "HR Department",
-        "subject_hint": "Follow-Up on Software Engineer Interview",
-    },
-    {
-        "situation": "Your college's placement cell has scheduled a campus recruitment drive. However, the date clashes with your end-semester examinations. Many students in your batch are facing the same conflict and have approached you as their class representative to raise this issue.",
-        "task": "Write an email to the Placement Coordinator requesting a change in the recruitment drive date, explaining the reason for the conflict and suggesting alternative dates.",
-        "to": "Placement Coordinator",
-        "subject_hint": "Request to Reschedule Campus Recruitment Drive",
-    },
-    {
-        "situation": "You are an employee who recently completed an advanced certification in cloud computing at your own expense. Your company has a policy of reimbursing employees for job-relevant certifications upon submission of proof, but your reimbursement claim has been pending for over three months despite multiple verbal reminders.",
-        "task": "Write a formal email to the HR and Finance department requesting urgent processing of your reimbursement, providing relevant details and a polite but firm tone.",
-        "to": "HR and Finance Department",
-        "subject_hint": "Pending Reimbursement for Cloud Certification",
-    },
-    {
-        "situation": "Your team recently launched a new product feature that received overwhelmingly positive feedback from clients. Your team lead and two colleagues put in exceptional overtime hours to meet the release deadline. You wish to formally appreciate their contribution.",
-        "task": "Write an email to your department head appreciating your team lead and colleagues for their contribution, highlighting the positive impact of their work and suggesting that their effort be formally recognised.",
-        "to": "Department Head",
-        "subject_hint": "Appreciation for Team's Exceptional Contribution",
-    },
-    {
-        "situation": "A new company policy mandates that all employees must complete a cybersecurity awareness training module within two weeks. You are a team lead and several of your team members are currently occupied with a critical product release during this period. Completing the training on time may impact delivery quality.",
-        "task": "Write an email to your HR Business Partner explaining the situation, requesting an extension for your team to complete the training after the product release, and assuring compliance within the extended timeframe.",
-        "to": "HR Business Partner",
-        "subject_hint": "Request for Extension on Cybersecurity Training Deadline",
-    },
-    {
-        "situation": "You ordered a laptop from an online retailer for official use three weeks ago. Despite multiple delivery attempts, the package was marked as delivered but never received. You have already contacted the courier company, which has asked you to raise a complaint with the retailer.",
-        "task": "Write a formal complaint email to the retailer's customer support team, describing the situation clearly, providing order details, and requesting an urgent resolution such as a replacement or refund.",
-        "to": "Customer Support Team",
-        "subject_hint": "Complaint Regarding Non-Delivery of Order",
-    },
-    {
-        "situation": "Your organisation is organising its annual company picnic and has asked for volunteers to help with planning and coordination. You are enthusiastic about contributing but are uncertain about your weekend availability due to an ongoing personal project.",
-        "task": "Write an email to the event organising committee expressing your interest in volunteering, explaining your availability constraints, and suggesting specific roles you could take on without conflicts.",
-        "to": "Event Organising Committee",
-        "subject_hint": "Expression of Interest in Volunteering for Annual Picnic",
-    },
+# ── Email topic pool for dynamic generation (20+ diverse scenarios) ───────
+EMAIL_TOPIC_POOL = [
+    # Workplace
+    {"context": "Workplace", "to": "Project Manager", "theme": "deadline extension request due to resource shortage and dependency delays"},
+    {"context": "Workplace", "to": "HR Department", "theme": "requesting work-from-home policy clarification after new office mandate"},
+    {"context": "Workplace", "to": "Department Head", "theme": "appreciating a colleague for exceptional performance during a critical product launch"},
+    {"context": "Workplace", "to": "IT Support Team", "theme": "escalating an unresolved VPN and system access issue affecting productivity for a week"},
+    {"context": "Workplace", "to": "Finance Department", "theme": "follow-up on pending reimbursement for certification course completed three months ago"},
+    {"context": "Workplace", "to": "Senior Manager", "theme": "raising concern about unrealistic targets assigned to the team for the current quarter"},
+    {"context": "Workplace", "to": "HR Business Partner", "theme": "requesting extension for mandatory cybersecurity training due to ongoing product release"},
+    {"context": "Workplace", "to": "Operations Head", "theme": "proposing a new shift rotation policy to improve team morale and reduce overtime fatigue"},
+    # Academic
+    {"context": "Academic", "to": "Placement Coordinator", "theme": "requesting rescheduling of campus recruitment drive clashing with end-semester examinations"},
+    {"context": "Academic", "to": "Professor / Faculty Advisor", "theme": "requesting deadline extension for thesis submission due to data collection delays"},
+    {"context": "Academic", "to": "University Registrar", "theme": "applying for fee waiver or scholarship based on family financial hardship"},
+    {"context": "Academic", "to": "Department Head", "theme": "complaint regarding unavailability of laboratory equipment during scheduled practical sessions"},
+    {"context": "Academic", "to": "Internship Coordinator", "theme": "seeking permission to convert mandatory internship to a remote work arrangement"},
+    # Customer / Consumer
+    {"context": "Customer", "to": "Customer Support Team", "theme": "formal complaint about non-delivery of ordered laptop marked as delivered by courier"},
+    {"context": "Customer", "to": "Bank Customer Service", "theme": "reporting an unauthorized transaction on bank account and requesting immediate resolution"},
+    {"context": "Customer", "to": "Subscription Service Support", "theme": "requesting cancellation and refund for auto-renewed annual subscription without prior notice"},
+    # Professional Communication
+    {"context": "Professional", "to": "HR Department", "theme": "follow-up email after a job interview held ten days ago with no response received"},
+    {"context": "Professional", "to": "Event Organising Committee", "theme": "expressing interest in volunteering for annual company picnic with availability constraints"},
+    {"context": "Professional", "to": "Vendor / Supplier", "theme": "escalating repeated delays in raw material delivery impacting production schedule"},
+    {"context": "Professional", "to": "Client Relations Team", "theme": "apologising for a service outage and outlining remediation steps and timelines"},
+    {"context": "Professional", "to": "Marketing Head", "theme": "proposing a social media campaign to improve brand visibility among younger audiences"},
+    {"context": "Professional", "to": "External Collaborator", "theme": "requesting an urgent meeting to align on revised project scope and deliverables"},
 ]
+
+# ── Passage topic pool for dynamic generation ─────────────────────────────
+PASSAGE_TOPIC_POOL = {
+    "Workplace & Professional": [
+        "impact of remote work on team collaboration and productivity",
+        "importance of performance appraisals in employee retention",
+        "role of mentorship programs in career development",
+        "how agile methodology improves software delivery timelines",
+        "effect of diversity and inclusion initiatives on company culture",
+        "significance of KPIs in measuring organisational performance",
+        "how upskilling programs reduce employee attrition rates",
+        "benefits and challenges of cross-functional team structures",
+        "role of transparent communication in crisis management at work",
+        "how flexible work policies affect employee satisfaction",
+    ],
+    "Technology & Science": [
+        "how machine learning algorithms detect fraudulent transactions",
+        "impact of quantum computing on modern cryptography",
+        "role of IoT devices in smart city infrastructure",
+        "how CRISPR gene-editing technology works in medical research",
+        "advantages of containerisation using Docker in software deployment",
+        "how satellite imagery is used in disaster response operations",
+        "role of neural networks in natural language processing",
+        "environmental impact of e-waste from discarded electronic devices",
+        "how cybersecurity professionals use ethical hacking to protect systems",
+        "significance of open-source software in modern application development",
+    ],
+    "Social & Current Affairs": [
+        "how microfinance empowers women entrepreneurs in rural communities",
+        "impact of social media on voter behaviour during elections",
+        "role of urban green spaces in reducing city heat island effect",
+        "how universal basic income is being tested in various countries",
+        "impact of air pollution on childhood respiratory health in cities",
+        "why food security remains a critical global challenge",
+        "role of international peacekeeping forces in post-conflict zones",
+        "how climate migration is reshaping population distribution globally",
+        "impact of digital literacy programs on reducing unemployment",
+        "role of whistleblower protection laws in combating corruption",
+    ],
+    "Academic & Student Life": [
+        "why internship experience improves graduate employability significantly",
+        "impact of academic pressure on student mental health and wellbeing",
+        "how peer learning circles enhance understanding of complex subjects",
+        "role of extracurricular activities in holistic student development",
+        "why plagiarism undermines the integrity of academic research",
+        "impact of online education platforms on traditional classroom learning",
+        "how college hackathons prepare students for real-world problem solving",
+        "importance of research publications in faculty career progression",
+        "why attendance policies remain controversial in higher education",
+        "how scholarship programs widen access to quality education",
+    ],
+    "Tone & Context Awareness": [
+        "how the tone of written communication affects professional relationships",
+        "difference between formal and informal registers in workplace emails",
+        "why word choice determines the effectiveness of persuasive writing",
+        "how adverbs modify meaning and tone in journalistic writing",
+        "impact of concise language in making technical documents accessible",
+        "why active voice improves clarity in business communication",
+        "how metaphors and analogies aid explanation in academic writing",
+        "role of hedging language in scientific and research writing",
+        "why proofreading reduces miscommunication in official correspondence",
+        "how sentence structure affects the rhythm and readability of prose",
+    ],
+}
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  DEDUP HELPERS
@@ -342,9 +381,10 @@ def reset_recall_state():
     st.session_state.pr_score_data = None
     st.session_state.pr_history = []
     st.session_state.pr_count = 0
+    st.session_state.pr_used_topics = []
 
 def reset_email_state():
-    st.session_state.em_phase = "task"      # "task" | "writing" | "scored"
+    st.session_state.em_phase = "task"
     st.session_state.em_scenario = None
     st.session_state.em_start_time = None
     st.session_state.em_live_text = ""
@@ -352,9 +392,8 @@ def reset_email_state():
     st.session_state.em_score_data = None
     st.session_state.em_history = []
     st.session_state.em_count = 0
-    st.session_state.em_used_scenarios = []
+    st.session_state.em_used_topics = []
 
-# ── Initialise all keys ──────────────────────────────────────────────────
 _defaults = {
     "page": "setup",
     "score": 0, "total": 0,
@@ -373,13 +412,14 @@ _defaults = {
     "pr_live_text": "", "pr_submitted_text": "",
     "pr_score_data": None,
     "pr_history": [], "pr_count": 0,
+    "pr_used_topics": [],
     # email writing
     "em_phase": "task",
     "em_scenario": None, "em_start_time": None,
     "em_live_text": "", "em_submitted_text": "",
     "em_score_data": None,
     "em_history": [], "em_count": 0,
-    "em_used_scenarios": [],
+    "em_used_topics": [],
     "mode": "vocab",
 }
 for k, v in _defaults.items():
@@ -403,10 +443,12 @@ def _call(client, messages, max_tokens=600, temp=0.7):
         temperature=temp, max_tokens=max_tokens,
     )
     raw = resp.choices[0].message.content.strip()
-    raw = re.sub(r"^```json|^```|```$", "", raw, flags=re.MULTILINE).strip()
+    raw = re.sub(r"^```json\s*|^```\s*|```\s*$", "", raw, flags=re.MULTILINE).strip()
     return json.loads(raw)
 
-# ── Vocab Sprint helpers ─────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════
+#  SENTENCE COMPLETION — FULLY DYNAMIC
+# ═══════════════════════════════════════════════════════════════════════════
 
 def check_answer(client, sentence, accepted_answers, user_answer):
     ua = user_answer.strip().lower()
@@ -418,8 +460,8 @@ def check_answer(client, sentence, accepted_answers, user_answer):
     try:
         resp = client.chat.completions.create(
             messages=[
-                {"role":"system","content":"Strict English evaluator. Reply YES or NO only."},
-                {"role":"user","content":f'Sentence: "{sentence}"\nAccepted: {accepted_answers}\nStudent: "{user_answer}"\nIs it correct? YES or NO.'}
+                {"role": "system", "content": "Strict English evaluator. Reply YES or NO only."},
+                {"role": "user", "content": f'Sentence: "{sentence}"\nAccepted: {accepted_answers}\nStudent: "{user_answer}"\nIs it correct or a valid synonym? YES or NO.'}
             ],
             model="llama-3.3-70b-versatile", temperature=0.1, max_tokens=5
         )
@@ -430,24 +472,24 @@ def check_answer(client, sentence, accepted_answers, user_answer):
 def generate_lesson(client, word, sentence):
     try:
         return _call(client, [
-            {"role":"system","content":"English teacher. Return valid JSON only."},
-            {"role":"user","content":f'Word missed: "{word}" in: "{sentence}"\nReturn JSON: {{"meaning":"1-line def","synonyms":["s1","s2","s3"],"examples":["ex1","ex2"],"memory_tip":"tip","related_words":[{{"word":"w","meaning":"m","example":"e"}}]}}'}
+            {"role": "system", "content": "English teacher. Return valid JSON only."},
+            {"role": "user", "content": f'Word missed: "{word}" in: "{sentence}"\nReturn JSON: {{"meaning":"1-line def","synonyms":["s1","s2","s3"],"examples":["ex1","ex2"],"memory_tip":"tip","related_words":[{{"word":"w","meaning":"m","example":"e"}}]}}'}
         ], max_tokens=600)
     except Exception:
-        return {"meaning":f"{word}: key vocabulary word.","synonyms":[],"examples":[],"memory_tip":"Review this word.","related_words":[]}
+        return {"meaning": f"{word}: key vocabulary word.", "synonyms": [], "examples": [], "memory_tip": "Review this word.", "related_words": []}
 
 def generate_suggestion(client, word, sentence):
     try:
         return _call(client, [
-            {"role":"system","content":"English tutor. Return valid JSON only."},
-            {"role":"user","content":f'Student got "{word}" correct in: "{sentence}"\nReturn JSON: {{"tip":"1-2 sentence tip","advanced_word":"word","advanced_meaning":"meaning"}}'}
+            {"role": "system", "content": "English tutor. Return valid JSON only."},
+            {"role": "user", "content": f'Student got "{word}" correct in: "{sentence}"\nReturn JSON: {{"tip":"1-2 sentence tip","advanced_word":"word","advanced_meaning":"meaning"}}'}
         ], max_tokens=200, temp=0.7)
     except Exception:
-        return {"tip":f"Great use of '{word}'!","advanced_word":"","advanced_meaning":""}
+        return {"tip": f"Great use of '{word}'!", "advanced_word": "", "advanced_meaning": ""}
 
 def _pick_seed(category: str) -> str:
-    pool  = SEED_WORDS.get(category, [])
-    used  = st.session_state.used_seeds.get(category, [])
+    pool = SEED_WORDS.get(category, [])
+    used = st.session_state.used_seeds.get(category, [])
     unused = [w for w in pool if w not in used]
     if not unused:
         st.session_state.used_seeds[category] = []
@@ -460,7 +502,7 @@ def _pick_category(configured_cat) -> str:
     if configured_cat:
         return configured_cat
     cats = list(CATEGORY_THEMES.keys())
-    idx  = st.session_state.cat_rotation_idx % len(cats)
+    idx = st.session_state.cat_rotation_idx % len(cats)
     st.session_state.cat_rotation_idx += 1
     if idx == 0 and st.session_state.total > 0:
         random.shuffle(cats)
@@ -470,7 +512,7 @@ def _pick_category(configured_cat) -> str:
 
 def generate_llm_question(client, category, asked_sentences, seed_word, attempt_num):
     themes = CATEGORY_THEMES.get(category, "general English vocabulary")
-    temp   = min(0.75 + attempt_num * 0.08, 1.0)
+    temp = min(0.75 + attempt_num * 0.08, 1.0)
     avoid_list = asked_sentences[-40:] if len(asked_sentences) > 40 else asked_sentences
     avoid = "\n".join(f"- {s}" for s in avoid_list) if avoid_list else "none"
 
@@ -478,28 +520,28 @@ def generate_llm_question(client, category, asked_sentences, seed_word, attempt_
 
 Category: {category}
 Theme: {themes}
-Focus seed word/concept: "{seed_word}" — incorporate this into the sentence context.
-Difficulty: EASY TO MEDIUM — use common words a college student would know.
+Focus seed word/concept: "{seed_word}" — use it to set the context of the sentence.
+Difficulty: EASY TO MEDIUM — common words a college graduate would know.
 
 STRICT TCS NQT FORMAT:
 - ONE sentence with exactly ONE blank written as ________
-- The student must type ONE word (or at most two words) that best fits
-- Sentence should be 10–20 words
-- Clear grammatical context; only one logical answer fits
-- The blank answer must NOT be "{seed_word}" itself — use it as context
-- Do NOT copy or closely resemble these sentences:
+- Student must type ONE word (or at most two words) that best fits
+- Sentence must be 10 to 20 words long
+- Clear grammatical context; only one logical answer category fits
+- The blank answer must NOT be "{seed_word}" itself — use it only as context
+- Do NOT copy or closely resemble these previously asked sentences:
 {avoid}
 
-Return ONLY valid JSON:
+Return ONLY valid JSON — no markdown, no extra text:
 {{
-  "sentence": "The software engineer ________ the bug before the product launch.",
-  "accepted_answers": ["fixed", "resolved", "identified"],
+  "sentence": "The manager ________ the new employee about company policies on the first day.",
+  "accepted_answers": ["briefed", "informed", "educated"],
   "category": "{category}"
 }}"""
 
     data = _call(client, [
-        {"role":"system","content":"You write unique English vocabulary exam questions. Return valid JSON only."},
-        {"role":"user","content":prompt}
+        {"role": "system", "content": "You write unique English sentence completion exam questions. Return valid JSON only. No markdown."},
+        {"role": "user", "content": prompt}
     ], max_tokens=300, temp=temp)
 
     assert "sentence" in data and "accepted_answers" in data
@@ -509,27 +551,28 @@ Return ONLY valid JSON:
     data.setdefault("category", category)
     return data
 
+# Static fallback pool (only used if all LLM attempts fail)
 FALLBACK_POOL = [
-    {"sentence":"The intern ________ all the required documents before the interview.","accepted_answers":["submitted","prepared","organised"],"category":"Workplace & Professional"},
-    {"sentence":"The scientist ________ the experiment under controlled laboratory conditions.","accepted_answers":["conducted","performed","carried out"],"category":"Technology & Science"},
-    {"sentence":"The government ________ a new policy to reduce air pollution in cities.","accepted_answers":["introduced","announced","implemented"],"category":"Social & Current Affairs"},
-    {"sentence":"The professor ________ the students for their outstanding research presentation.","accepted_answers":["praised","commended","appreciated"],"category":"Academic & Student Life"},
-    {"sentence":"She ________ accepted the criticism and promised to improve her work.","accepted_answers":["graciously","humbly","politely"],"category":"Tone & Context Awareness"},
-    {"sentence":"The team ________ the project well ahead of the scheduled deadline.","accepted_answers":["completed","finished","delivered"],"category":"Workplace & Professional"},
-    {"sentence":"The developer ________ a critical security vulnerability in the application.","accepted_answers":["discovered","identified","detected"],"category":"Technology & Science"},
-    {"sentence":"The charity ________ food and clothing to thousands of flood victims.","accepted_answers":["distributed","provided","supplied"],"category":"Social & Current Affairs"},
-    {"sentence":"The student ________ for the entrance exam by practising daily for months.","accepted_answers":["prepared","studied","revised"],"category":"Academic & Student Life"},
-    {"sentence":"The manager spoke ________ to the client despite the project delays.","accepted_answers":["confidently","calmly","professionally"],"category":"Tone & Context Awareness"},
-    {"sentence":"The company ________ its profits by cutting unnecessary operational costs.","accepted_answers":["increased","improved","boosted"],"category":"Workplace & Professional"},
-    {"sentence":"The engineers ________ a new prototype for the electric vehicle battery.","accepted_answers":["designed","built","developed"],"category":"Technology & Science"},
-    {"sentence":"The journalist ________ corruption in the local municipal corporation.","accepted_answers":["exposed","uncovered","revealed"],"category":"Social & Current Affairs"},
-    {"sentence":"The college ________ fifty merit scholarships for underprivileged students.","accepted_answers":["awarded","offered","announced"],"category":"Academic & Student Life"},
-    {"sentence":"He ________ agreed to take on the extra workload during the busy season.","accepted_answers":["willingly","readily","happily"],"category":"Tone & Context Awareness"},
+    {"sentence": "The intern ________ all the required documents before the interview.", "accepted_answers": ["submitted", "prepared", "organised"], "category": "Workplace & Professional"},
+    {"sentence": "The scientist ________ the experiment under controlled laboratory conditions.", "accepted_answers": ["conducted", "performed", "carried out"], "category": "Technology & Science"},
+    {"sentence": "The government ________ a new policy to reduce air pollution in cities.", "accepted_answers": ["introduced", "announced", "implemented"], "category": "Social & Current Affairs"},
+    {"sentence": "The professor ________ the students for their outstanding research presentation.", "accepted_answers": ["praised", "commended", "appreciated"], "category": "Academic & Student Life"},
+    {"sentence": "She ________ accepted the criticism and promised to improve her work.", "accepted_answers": ["graciously", "humbly", "politely"], "category": "Tone & Context Awareness"},
+    {"sentence": "The team ________ the project well ahead of the scheduled deadline.", "accepted_answers": ["completed", "finished", "delivered"], "category": "Workplace & Professional"},
+    {"sentence": "The developer ________ a critical security vulnerability in the application.", "accepted_answers": ["discovered", "identified", "detected"], "category": "Technology & Science"},
+    {"sentence": "The charity ________ food and clothing to thousands of flood victims.", "accepted_answers": ["distributed", "provided", "supplied"], "category": "Social & Current Affairs"},
+    {"sentence": "The student ________ for the entrance exam by practising daily for months.", "accepted_answers": ["prepared", "studied", "revised"], "category": "Academic & Student Life"},
+    {"sentence": "The manager spoke ________ to the client despite the project delays.", "accepted_answers": ["confidently", "calmly", "professionally"], "category": "Tone & Context Awareness"},
+    {"sentence": "The company ________ its profits by cutting unnecessary operational costs.", "accepted_answers": ["increased", "improved", "boosted"], "category": "Workplace & Professional"},
+    {"sentence": "The engineers ________ a new prototype for the electric vehicle battery.", "accepted_answers": ["designed", "built", "developed"], "category": "Technology & Science"},
+    {"sentence": "The journalist ________ corruption in the local municipal corporation.", "accepted_answers": ["exposed", "uncovered", "revealed"], "category": "Social & Current Affairs"},
+    {"sentence": "The college ________ fifty merit scholarships for underprivileged students.", "accepted_answers": ["awarded", "offered", "announced"], "category": "Academic & Student Life"},
+    {"sentence": "He ________ agreed to take on the extra workload during the busy season.", "accepted_answers": ["willingly", "readily", "happily"], "category": "Tone & Context Awareness"},
 ]
 
 def get_next_question(client):
     configured_cat = st.session_state.get("category_filter")
-    asked_hashes   = st.session_state.asked_hashes
+    asked_hashes = st.session_state.asked_hashes
     asked_sentences = st.session_state.asked_sentences
     chosen_cat = _pick_category(configured_cat)
     seed = _pick_seed(chosen_cat)
@@ -541,6 +584,7 @@ def get_next_question(client):
             seed = _pick_seed(chosen_cat)
         except Exception:
             time.sleep(0.3)
+    # Fallback only if LLM fails after 8 attempts
     unused_fallbacks = [
         f for f in FALLBACK_POOL
         if _sentence_hash(f["sentence"]) not in asked_hashes
@@ -557,11 +601,11 @@ def get_next_question(client):
 def process_submission(client, q, ans, timed_out=False):
     with st.spinner("Checking…"):
         is_correct = False if timed_out else check_answer(client, q["sentence"], q["accepted_answers"], ans)
-    st.session_state.answered    = True
+    st.session_state.answered = True
     st.session_state.user_answer = "(timed out)" if timed_out else ans
-    st.session_state.feedback    = is_correct
-    st.session_state.total      += 1
-    primary     = q["accepted_answers"][0]
+    st.session_state.feedback = is_correct
+    st.session_state.total += 1
+    primary = q["accepted_answers"][0]
     is_reinforce = st.session_state.is_reinforce
     if is_correct:
         st.session_state.score += 1
@@ -588,101 +632,131 @@ def process_submission(client, q, ans, timed_out=False):
                 })
         with st.spinner("Preparing lesson…"):
             st.session_state.lesson = generate_lesson(client, primary, q["sentence"])
-    st.session_state.history.append({"word":primary,"correct":is_correct,"qid":q["id"],"reinforce":is_reinforce})
+    st.session_state.history.append({"word": primary, "correct": is_correct, "qid": q["id"], "reinforce": is_reinforce})
     st.session_state.live_answer = ""
 
-# ── Passage Recall helpers ───────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════
+#  PASSAGE RECALL — FULLY DYNAMIC (1 to 1.5 lines, 25–35 words)
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _pick_passage_topic(category: str) -> str:
+    """Pick an unused topic from the passage topic pool for variety."""
+    pool = PASSAGE_TOPIC_POOL.get(category, [f"a general topic about {category}"])
+    used = st.session_state.get("pr_used_topics", [])
+    unused = [t for t in pool if t not in used]
+    if not unused:
+        st.session_state.pr_used_topics = []
+        unused = pool
+    topic = random.choice(unused)
+    st.session_state.pr_used_topics.append(topic)
+    return topic
 
 def generate_passage(client, category):
     """
-    Generate a SHORT passage (1 to 1.5 lines / 25-35 words) for TCS NQT.
-    TCS passages are brief — the student must recall content, not volume.
+    Generates a SHORT passage (25–35 words / 1 to 1.5 lines) per TCS NQT spec.
+    Every call to this function generates a NEW passage using LLM — no hardcoding.
     """
     cat_theme = CATEGORY_THEMES.get(category, "general knowledge")
-    try:
-        resp = client.chat.completions.create(
-            messages=[
-                {"role":"system","content":"You write short, factual English sentences for reading comprehension tests. Return valid JSON only. No markdown."},
-                {"role":"user","content":f"""Write ONE short factual passage (exactly 25 to 35 words) on a topic from: {cat_theme}.
+    topic = _pick_passage_topic(category)
 
-Rules:
-- STRICT word count: 25 to 35 words only — this simulates TCS NQT which uses 1 to 1.5 line passages
-- Self-contained: all key facts must be inside the passage itself
-- Flowing prose — no bullet points, no headings
-- Include at least 2-3 distinct, specific facts or details the student must recall
+    prompt = f"""Write ONE short factual passage for a TCS NQT Verbal Ability passage recall test.
+
+Topic: {topic}
+Category theme: {cat_theme}
+
+STRICT REQUIREMENTS:
+- Word count: EXACTLY 25 to 35 words — this is a 1 to 1.5 line passage as used in actual TCS NQT
+- Self-contained: all key facts must be stated inside the passage itself
+- Flowing prose — no bullet points, no headings, no lists
+- Include at least 2 to 3 specific, distinct facts or details (numbers, names, percentages, or concrete outcomes work well)
+- These details are what the student must recall — make them meaningful
 - Suitable for a college student
 - Do NOT start with "This passage" or "The following"
+- Write naturally as a single continuous sentence or two short sentences
 
-Return ONLY JSON: {{"topic":"short topic title","passage":"full passage text"}}"""}
-            ],
-            model="llama-3.3-70b-versatile", temperature=0.8, max_tokens=200
-        )
-        raw = resp.choices[0].message.content.strip()
-        raw = re.sub(r"^```json|^```|```$", "", raw, flags=re.MULTILINE).strip()
-        data = json.loads(raw)
-        assert "passage" in data
-        words = len(data["passage"].split())
-        assert 18 <= words <= 50, f"Passage word count {words} out of range"
-        return data
-    except Exception:
-        return {
-            "topic": "Remote Work",
-            "passage": (
-                "Remote work increased by 140% between 2019 and 2023, boosting employee "
-                "satisfaction by 22% while reducing office costs significantly for most organisations."
+Return ONLY valid JSON — no markdown:
+{{"topic": "short 4-6 word title", "passage": "the full passage text here"}}"""
+
+    for attempt in range(3):
+        try:
+            resp = client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": "You write short factual English passages for reading comprehension tests. Return valid JSON only. No markdown backticks."},
+                    {"role": "user", "content": prompt}
+                ],
+                model="llama-3.3-70b-versatile",
+                temperature=0.75 + attempt * 0.1,
+                max_tokens=200,
             )
-        }
+            raw = resp.choices[0].message.content.strip()
+            raw = re.sub(r"^```json\s*|^```\s*|```\s*$", "", raw, flags=re.MULTILINE).strip()
+            data = json.loads(raw)
+            assert "passage" in data and "topic" in data
+            words = len(data["passage"].split())
+            # Accept 20–50 words (slightly relaxed to handle LLM variance)
+            assert 20 <= words <= 55, f"Word count {words} out of range"
+            return data
+        except Exception:
+            time.sleep(0.5)
+
+    # Last-resort fallback: generate a simple passage inline without JSON
+    fallback_passages = [
+        {"topic": "Remote Work Trends", "passage": "Remote work increased by 140% between 2019 and 2023, boosting employee satisfaction by 22% while reducing office operational costs for most large organisations significantly."},
+        {"topic": "Urban Air Pollution", "passage": "Air pollution causes 7 million premature deaths annually worldwide, with particulate matter from vehicles and industries being the leading contributor in densely populated cities."},
+        {"topic": "Machine Learning Growth", "passage": "The global machine learning market reached 21 billion dollars in 2022 and is projected to grow at 38% annually, driven by demand in healthcare, finance, and retail sectors."},
+        {"topic": "Student Mental Health", "passage": "A 2023 survey found that 45% of university students reported high academic stress, with examination pressure and financial concerns cited as the two most common contributing factors."},
+        {"topic": "Email Communication", "passage": "Studies show that professionals spend an average of 2.5 hours daily reading and writing emails, making clear and concise written communication an essential workplace skill today."},
+    ]
+    return random.choice(fallback_passages)
 
 def score_recall(client, original_passage, user_response):
-    """
-    Score the recall based on TCS NQT criteria:
-    - Content accuracy (not verbatim matching)
-    - Key facts recalled
-    - Clarity and coherence
-    Passage is short (25-35 words), so scoring is strict on details.
-    """
+    """Score recall per TCS NQT criteria — content accuracy over verbatim matching."""
     if not user_response.strip():
         return {
             "score": 0, "max_score": 10,
             "content_accuracy": "No response submitted.",
             "key_points_covered": [],
             "key_points_missed": ["No response — all key facts missed."],
-            "feedback": "You did not write anything. Try to recall at least the main idea next time.",
+            "feedback": "You did not write anything. Try to recall at least the main idea and one key fact next time.",
             "grade": "F"
         }
-    prompt = f"""You are evaluating a TCS NQT passage recall answer.
 
-ORIGINAL PASSAGE (25-35 words):
+    prompt = f"""You are evaluating a TCS NQT Verbal Ability passage recall answer.
+
+ORIGINAL PASSAGE (25–35 words):
 \"\"\"{original_passage}\"\"\"
 
 STUDENT'S RECONSTRUCTION:
 \"\"\"{user_response}\"\"\"
 
 TCS NQT Scoring Criteria (total = 10 points):
-- Main idea captured accurately: (0–4 pts)
-- Specific facts/numbers/details recalled correctly: (0–4 pts)
-- Clarity and readability of student's writing: (0–2 pts)
+- Main idea captured accurately: 0–4 points
+- Specific facts / numbers / details recalled correctly: 0–4 points
+- Clarity and readability of student's writing: 0–2 points
 
-Important: Since the passage is very short (1-1.5 lines), every specific detail matters.
-Award high marks only if the student captured the core facts accurately, not just the topic.
-The student must show they understood the passage, NOT copy it word for word.
+Scoring guidance:
+- Since the passage is very short (1–1.5 lines), every specific detail matters greatly
+- Award high marks only if the student captured the core facts accurately
+- The student must SHOW understanding — NOT copy word-for-word
+- Partial credit is allowed for partially correct facts
+- A student who captures the main idea but misses specific numbers/names gets 5–6 out of 10
 
-Return ONLY valid JSON:
+Return ONLY valid JSON — no markdown:
 {{
   "score": 7,
   "max_score": 10,
-  "content_accuracy": "One sentence summary of accuracy",
-  "key_points_covered": ["specific fact 1 they got right", "fact 2"],
-  "key_points_missed": ["specific fact they missed or got wrong"],
-  "feedback": "2-3 sentence constructive feedback",
+  "content_accuracy": "One sentence summary of how accurately the student recalled the passage",
+  "key_points_covered": ["specific fact or detail they recalled correctly"],
+  "key_points_missed": ["specific fact or detail they missed or got wrong"],
+  "feedback": "2–3 sentence constructive feedback for improvement",
   "grade": "B"
 }}
-Grade: 9-10=A, 7-8=B, 5-6=C, 3-4=D, 0-2=F"""
+Grade scale: 9–10 = A, 7–8 = B, 5–6 = C, 3–4 = D, 0–2 = F"""
 
     try:
         return _call(client, [
-            {"role":"system","content":"You are a strict TCS NQT verbal ability examiner. Return valid JSON only."},
-            {"role":"user","content":prompt}
+            {"role": "system", "content": "You are a strict TCS NQT verbal ability examiner. Return valid JSON only. No markdown."},
+            {"role": "user", "content": prompt}
         ], max_tokens=500, temp=0.3)
     except Exception:
         words_written = len(user_response.strip().split())
@@ -692,30 +766,85 @@ Grade: 9-10=A, 7-8=B, 5-6=C, 3-4=D, 0-2=F"""
             "content_accuracy": "Could not evaluate automatically.",
             "key_points_covered": [],
             "key_points_missed": [],
-            "feedback": f"You wrote {words_written} words. Review the original passage.",
+            "feedback": f"You wrote {words_written} words. Compare your response with the original passage carefully.",
             "grade": "—"
         }
 
-# ── Email Writing helpers ─────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════
+#  EMAIL WRITING — FULLY DYNAMIC SCENARIO GENERATION
+# ═══════════════════════════════════════════════════════════════════════════
 
-def get_email_scenario():
-    used = st.session_state.em_used_scenarios
-    available = [i for i in range(len(EMAIL_SCENARIOS)) if i not in used]
-    if not available:
-        st.session_state.em_used_scenarios = []
-        available = list(range(len(EMAIL_SCENARIOS)))
-    idx = random.choice(available)
-    st.session_state.em_used_scenarios.append(idx)
-    return EMAIL_SCENARIOS[idx]
+def _pick_email_topic() -> dict:
+    """Pick an unused email topic from the pool for variety."""
+    pool = EMAIL_TOPIC_POOL
+    used = st.session_state.get("em_used_topics", [])
+    unused = [t for t in pool if t["theme"] not in used]
+    if not unused:
+        st.session_state.em_used_topics = []
+        unused = pool
+    topic = random.choice(unused)
+    st.session_state.em_used_topics.append(topic["theme"])
+    return topic
+
+def generate_email_scenario(client) -> dict:
+    """
+    Generate a FULLY DYNAMIC email writing scenario per TCS NQT spec.
+    Every call generates a new, unique, realistic scenario using LLM.
+    """
+    topic = _pick_email_topic()
+
+    prompt = f"""Create ONE realistic TCS NQT Email Writing scenario for a college student or young professional.
+
+Context type: {topic["context"]}
+Recipient: {topic["to"]}
+Core theme: {topic["theme"]}
+
+REQUIREMENTS:
+- The situation must be 3–5 sentences: specific, realistic, with enough detail that a student can write a full email
+- Include specific context (e.g. exact duration, specific role, concrete problem) — not vague
+- The task instruction must clearly tell the student WHAT to do and WHAT to include in the email
+- Make it something a real TCS employee or college student would face
+- Provide a realistic subject line hint (not generic)
+- The email should require AT LEAST 100 words to address properly
+
+Return ONLY valid JSON — no markdown:
+{{
+  "situation": "3–5 sentence description of the situation with specific context",
+  "task": "Clear instruction: Write an email to [recipient] doing X, Y, Z. Include these points...",
+  "to": "{topic["to"]}",
+  "subject_hint": "Specific Subject Line Example"
+}}"""
+
+    for attempt in range(3):
+        try:
+            resp = client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": "You create realistic professional and academic email writing scenarios for TCS NQT exam preparation. Return valid JSON only. No markdown."},
+                    {"role": "user", "content": prompt}
+                ],
+                model="llama-3.3-70b-versatile",
+                temperature=0.8 + attempt * 0.05,
+                max_tokens=500,
+            )
+            raw = resp.choices[0].message.content.strip()
+            raw = re.sub(r"^```json\s*|^```\s*|```\s*$", "", raw, flags=re.MULTILINE).strip()
+            data = json.loads(raw)
+            assert "situation" in data and "task" in data and "to" in data and "subject_hint" in data
+            assert len(data["situation"]) > 80, "Situation too short"
+            return data
+        except Exception:
+            time.sleep(0.5)
+
+    # Fallback if LLM fails
+    return {
+        "situation": f"You are dealing with a situation related to {topic['theme']}. This has been ongoing for some time and requires formal written communication to resolve it. You have already tried informal channels without success and need to escalate the matter through a professional email.",
+        "task": f"Write a formal professional email to {topic['to']} explaining the situation clearly, stating what action you require, providing any relevant background details, and suggesting a reasonable timeline for resolution.",
+        "to": topic["to"],
+        "subject_hint": f"Regarding: {topic['theme'].title()[:50]}"
+    }
 
 def score_email(client, scenario, user_email):
-    """
-    Score the email per TCS NQT criteria:
-    - Must be at least 100 words
-    - Complete sentences
-    - Addresses the situation
-    - Appropriate tone and format
-    """
+    """Score email per TCS NQT criteria."""
     word_count = len(user_email.strip().split()) if user_email.strip() else 0
 
     if not user_email.strip() or word_count < 10:
@@ -728,9 +857,11 @@ def score_email(client, scenario, user_email):
             "improvements": ["Write at least 100 words to meet TCS NQT requirements."],
             "tone_assessment": "N/A",
             "structure_assessment": "N/A",
-            "feedback": "You did not write a sufficient response. TCS NQT requires at least 100 words written in complete sentences.",
+            "feedback": "You did not write a sufficient response. TCS NQT requires at least 100 words in complete sentences addressing all aspects of the situation.",
             "grade": "F"
         }
+
+    meets_min_str = "true" if word_count >= EMAIL_MIN_WORDS else "false"
 
     prompt = f"""You are evaluating a TCS NQT Email Writing task response.
 
@@ -747,34 +878,34 @@ WORD COUNT: {word_count}
 MINIMUM REQUIRED: {EMAIL_MIN_WORDS} words
 
 TCS NQT Email Writing Scoring Criteria (total = 10 points):
-1. Task completion — does the email address all aspects of the situation? (0–3 pts)
-2. Language and vocabulary — appropriate word choice, no grammatical errors? (0–2 pts)
-3. Tone and register — professional, polite, and appropriate for the context? (0–2 pts)
-4. Structure and organisation — clear subject, greeting, body, closing? (0–2 pts)
+1. Task completion — does the email address ALL aspects of the situation? (0–3 pts)
+2. Language and vocabulary — appropriate word choice, no major grammatical errors? (0–2 pts)
+3. Tone and register — professional, polite, and appropriate for the recipient and context? (0–2 pts)
+4. Structure and organisation — clear subject line reference, greeting, organised body, professional closing? (0–2 pts)
 5. Word count compliance — at least 100 words in complete sentences? (0–1 pt)
 
-Note: If word count is below 100, cap total score at 5 regardless of quality.
+IMPORTANT: If word count is below 100, cap total score at 5 regardless of quality.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON — no markdown:
 {{
   "score": 7,
   "max_score": 10,
   "word_count": {word_count},
-  "meets_minimum": {"true" if word_count >= EMAIL_MIN_WORDS else "false"},
-  "task_completion": "One sentence about how well the task was addressed",
+  "meets_minimum": {meets_min_str},
+  "task_completion": "One sentence about how well all aspects of the task were addressed",
   "strengths": ["strength 1", "strength 2"],
-  "improvements": ["improvement area 1", "improvement area 2"],
-  "tone_assessment": "One sentence about tone",
-  "structure_assessment": "One sentence about email structure",
-  "feedback": "3-4 sentence overall constructive feedback",
+  "improvements": ["specific improvement area 1", "specific improvement area 2"],
+  "tone_assessment": "One sentence assessment of tone and register",
+  "structure_assessment": "One sentence about email structure and organisation",
+  "feedback": "3–4 sentence overall constructive feedback",
   "grade": "B"
 }}
-Grade: 9-10=A, 7-8=B, 5-6=C, 3-4=D, 0-2=F"""
+Grade scale: 9–10 = A, 7–8 = B, 5–6 = C, 3–4 = D, 0–2 = F"""
 
     try:
         return _call(client, [
-            {"role":"system","content":"You are a strict TCS NQT email writing examiner. Return valid JSON only."},
-            {"role":"user","content":prompt}
+            {"role": "system", "content": "You are a strict TCS NQT email writing examiner. Return valid JSON only. No markdown."},
+            {"role": "user", "content": prompt}
         ], max_tokens=600, temp=0.3)
     except Exception:
         rough = min(10, max(0, word_count // 20)) if word_count >= EMAIL_MIN_WORDS else min(5, word_count // 20)
@@ -784,7 +915,7 @@ Grade: 9-10=A, 7-8=B, 5-6=C, 3-4=D, 0-2=F"""
             "task_completion": "Could not evaluate automatically.",
             "strengths": [], "improvements": [],
             "tone_assessment": "—", "structure_assessment": "—",
-            "feedback": f"You wrote {word_count} words. {'Meets minimum.' if word_count >= EMAIL_MIN_WORDS else 'Below 100-word minimum.'}",
+            "feedback": f"You wrote {word_count} words. {'Meets the 100-word minimum.' if word_count >= EMAIL_MIN_WORDS else 'Below the required 100-word minimum.'}",
             "grade": "—"
         }
 
@@ -793,7 +924,7 @@ Grade: 9-10=A, 7-8=B, 5-6=C, 3-4=D, 0-2=F"""
 # ═══════════════════════════════════════════════════════════════════════════
 
 st.markdown('<div class="big-title">⚡ TCS NQT Verbal Prep</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Sentence Completion · Passage Recall · Email Writing — AI-powered feedback</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Sentence Completion · Passage Recall · Email Writing — 100% AI-generated questions, TCS NQT spec</div>', unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════════════
 #  SETUP PAGE
@@ -802,29 +933,33 @@ st.markdown('<div class="subtitle">Sentence Completion · Passage Recall · Emai
 if st.session_state.page == "setup":
     st.markdown("""
     <div class="question-card" style="margin-bottom:20px;">
-        <b style="color:#B8A6FF;">📋 TCS NQT Verbal Ability Structure</b><br><br>
+        <b style="color:#B8A6FF;">📋 TCS NQT Verbal Ability — Official Structure</b><br><br>
         <table style="width:100%;border-collapse:collapse;font-size:0.82rem;color:#E4E4F0;">
             <tr style="background:#2e324a;">
                 <th style="padding:8px;text-align:left;">Section</th>
                 <th style="padding:8px;text-align:center;">Items</th>
-                <th style="padding:8px;text-align:center;">Time/Question</th>
+                <th style="padding:8px;text-align:center;">Time per Item</th>
             </tr>
             <tr><td style="padding:8px;">Sentence Completion</td><td style="padding:8px;text-align:center;">20</td><td style="padding:8px;text-align:center;">25 seconds each</td></tr>
-            <tr style="background:#1a1f2e;"><td style="padding:8px;">Passage Recall</td><td style="padding:8px;text-align:center;">4+4</td><td style="padding:8px;text-align:center;">30s read + 90s write</td></tr>
-            <tr><td style="padding:8px;">Email Writing</td><td style="padding:8px;text-align:center;">1</td><td style="padding:8px;text-align:center;">9 minutes (min 100 words)</td></tr>
+            <tr style="background:#1a1f2e;"><td style="padding:8px;">Instruction (Sentence Completion)</td><td style="padding:8px;text-align:center;">1</td><td style="padding:8px;text-align:center;">25 seconds</td></tr>
+            <tr><td style="padding:8px;">Passage Recall (4 passages × 2 parts)</td><td style="padding:8px;text-align:center;">4+4</td><td style="padding:8px;text-align:center;">30s read + 90s write</td></tr>
+            <tr style="background:#1a1f2e;"><td style="padding:8px;">Instruction (Passage Recall)</td><td style="padding:8px;text-align:center;">1</td><td style="padding:8px;text-align:center;">15 seconds</td></tr>
+            <tr><td style="padding:8px;">Email Writing</td><td style="padding:8px;text-align:center;">1</td><td style="padding:8px;text-align:center;">540 seconds (9 min), min 100 words</td></tr>
         </table>
+        <br>
+        <span style="color:#00E0B8;font-size:0.8rem;">✨ All questions are generated fresh by AI — no two sessions are the same.</span>
     </div>
     """, unsafe_allow_html=True)
 
     with st.form("setup_form"):
-        api_key  = st.text_input("Groq API Key", type="password", help="Free at console.groq.com")
-        mode     = st.radio(
-            "Select Mode",
+        api_key = st.text_input("Groq API Key", type="password", help="Free at console.groq.com")
+        mode = st.radio(
+            "Select Practice Mode",
             ["⚡ Sentence Completion", "📖 Passage Recall", "✉️ Email Writing"],
             horizontal=True
         )
-        cat_choice = st.selectbox("Category (for Sentence Completion)", list(CATEGORY_FILTER.keys()))
-        submitted = st.form_submit_button("🚀 Start")
+        cat_choice = st.selectbox("Category (Sentence Completion & Passage Recall)", list(CATEGORY_FILTER.keys()))
+        submitted = st.form_submit_button("🚀 Start Practice")
 
     if submitted:
         if not api_key.strip():
@@ -833,7 +968,7 @@ if st.session_state.page == "setup":
             reset_vocab_state()
             reset_recall_state()
             reset_email_state()
-            st.session_state.api_key        = api_key
+            st.session_state.api_key = api_key
             st.session_state.category_filter = CATEGORY_FILTER[cat_choice]
             if "Sentence" in mode:
                 st.session_state.mode = "vocab"
@@ -851,13 +986,12 @@ if st.session_state.page == "setup":
 # ═══════════════════════════════════════════════════════════════════════════
 
 elif st.session_state.page == "quiz":
-    client       = get_client(st.session_state.api_key)
+    client = get_client(st.session_state.api_key)
     missed_count = len(st.session_state.missed_bank)
-    total_gen    = len(st.session_state.asked_hashes)
 
     st.markdown(
         f'<div class="score-pill">✅ {st.session_state.score}/{st.session_state.total} &nbsp;|&nbsp; '
-        f'Q{st.session_state.total+1}/20 &nbsp;|&nbsp; 🔁 {missed_count} pending</div>',
+        f'Q{st.session_state.total + 1}/20 &nbsp;|&nbsp; 🔁 {missed_count} pending</div>',
         unsafe_allow_html=True,
     )
     st.write("")
@@ -879,7 +1013,7 @@ elif st.session_state.page == "quiz":
             st.rerun()
     st.write("")
 
-    # ── Pick question ────────────────────────────────────────────────────
+    # Pick question
     if st.session_state.current_q is None:
         pull_reinforce = (
             st.session_state.missed_bank and
@@ -888,8 +1022,10 @@ elif st.session_state.page == "quiz":
         )
         if pull_reinforce:
             entry = st.session_state.missed_bank[0]
-            q = {"id":entry["id"],"sentence":entry["sentence"],
-                 "accepted_answers":entry["accepted_answers"],"category":entry["category"]}
+            q = {
+                "id": entry["id"], "sentence": entry["sentence"],
+                "accepted_answers": entry["accepted_answers"], "category": entry["category"]
+            }
             st.session_state.is_reinforce = True
         else:
             with st.spinner("✨ Generating question…"):
@@ -898,23 +1034,23 @@ elif st.session_state.page == "quiz":
 
         st.session_state.asked_hashes.add(q["id"])
         st.session_state.asked_sentences.append(q["sentence"])
-        st.session_state.current_q  = q
+        st.session_state.current_q = q
         st.session_state.start_time = time.time()
-        st.session_state.answered   = False
-        st.session_state.feedback   = None
-        st.session_state.lesson     = None
+        st.session_state.answered = False
+        st.session_state.feedback = None
+        st.session_state.lesson = None
         st.session_state.suggestion = None
         st.session_state.live_answer = ""
         st.rerun()
 
-    q           = st.session_state.current_q
-    elapsed     = time.time() - st.session_state.start_time
-    remaining   = max(0.0, TIME_LIMIT - elapsed)
+    q = st.session_state.current_q
+    elapsed = time.time() - st.session_state.start_time
+    remaining = max(0.0, TIME_LIMIT - elapsed)
     is_reinforce = st.session_state.is_reinforce
 
     if not st.session_state.answered:
         if remaining <= 0:
-            captured  = st.session_state.live_answer.strip()
+            captured = st.session_state.live_answer.strip()
             timed_out = captured == ""
             process_submission(client, q, captured, timed_out=timed_out)
             st.rerun()
@@ -925,7 +1061,7 @@ elif st.session_state.page == "quiz":
             if is_reinforce:
                 tags += '<span class="reinforce-tag">🔁 REINFORCE</span>'
             else:
-                tags += '<span class="llm-tag">✨ AI</span>'
+                tags += '<span class="llm-tag">✨ AI Generated</span>'
             q_label = f'Question {st.session_state.total + 1} of 20'
             st.markdown(
                 f'<div class="question-card">{tags}'
@@ -961,15 +1097,17 @@ elif st.session_state.page == "quiz":
 
     else:
         tags = f'<span class="q-tag">{q["category"].upper()}</span>'
-        if is_reinforce: tags += '<span class="reinforce-tag">🔁 REINFORCE</span>'
-        else:            tags += '<span class="llm-tag">✨ AI</span>'
+        if is_reinforce:
+            tags += '<span class="reinforce-tag">🔁 REINFORCE</span>'
+        else:
+            tags += '<span class="llm-tag">✨ AI Generated</span>'
         st.markdown(
             f'<div class="question-card">{tags}'
             f'<div class="q-num">Question {st.session_state.total}</div>'
             f'<div class="q-text">{q["sentence"]}</div></div>',
             unsafe_allow_html=True,
         )
-        primary    = q["accepted_answers"][0]
+        primary = q["accepted_answers"][0]
         all_accept = " / ".join(q["accepted_answers"])
 
         if st.session_state.feedback:
@@ -983,7 +1121,7 @@ elif st.session_state.page == "quiz":
                 adv = f"<br><b>Try next:</b> <i>{sug['advanced_word']}</i> — {sug['advanced_meaning']}" if sug.get("advanced_word") else ""
                 st.markdown(f'<div class="levelup-box"><b style="color:#00E0B8;">💡 Tip</b><br>{sug["tip"]}{adv}</div>', unsafe_allow_html=True)
         else:
-            timeout_note   = '<br><span style="font-size:0.8rem;color:#FF6B35;">⏰ Time ran out.</span>' if st.session_state.user_answer == "(timed out)" else ""
+            timeout_note = '<br><span style="font-size:0.8rem;color:#FF6B35;">⏰ Time ran out.</span>' if st.session_state.user_answer == "(timed out)" else ""
             reinforce_note = "" if is_reinforce else '<br><span style="font-size:0.8rem;color:#FF9966;">🔁 Will revisit for reinforcement.</span>'
             st.markdown(f"""
             <div class="wrong-box">
@@ -992,16 +1130,16 @@ elif st.session_state.page == "quiz":
             </div>""", unsafe_allow_html=True)
             if st.session_state.lesson:
                 L = st.session_state.lesson
-                ex_html  = "".join(f"<li>{e}</li>" for e in L.get("examples", []))
+                ex_html = "".join(f"<li>{e}</li>" for e in L.get("examples", []))
                 syn_html = ", ".join(L.get("synonyms", []))
                 rel_html = "".join(f"<li><b>{r['word']}</b> — {r['meaning']}<br><i>{r['example']}</i></li>" for r in L.get("related_words", []))
                 st.markdown(f"""
                 <div class="lesson-box">
                     <h4 style="margin-top:0;color:#B8A6FF;">📘 {primary}</h4>
-                    <p><b>Meaning:</b> {L.get('meaning','')}</p>
+                    <p><b>Meaning:</b> {L.get('meaning', '')}</p>
                     <p><b>Synonyms:</b> {syn_html}</p>
                     <p><b>Examples:</b></p><ul>{ex_html}</ul>
-                    <p><b>Memory tip:</b> {L.get('memory_tip','')}</p>
+                    <p><b>Memory tip:</b> {L.get('memory_tip', '')}</p>
                     {'<p><b>Related:</b></p><ul>' + rel_html + '</ul>' if rel_html else ''}
                 </div>""", unsafe_allow_html=True)
 
@@ -1025,7 +1163,7 @@ elif st.session_state.page == "recall":
         score_txt = "No passages yet"
 
     st.markdown(
-        f'<div class="score-pill">📖 Passage {pr_count+1} &nbsp;|&nbsp; {score_txt} &nbsp;|&nbsp; {len(st.session_state.pr_history)} done</div>',
+        f'<div class="score-pill">📖 Passage {pr_count + 1} &nbsp;|&nbsp; {score_txt} &nbsp;|&nbsp; {len(st.session_state.pr_history)} done</div>',
         unsafe_allow_html=True,
     )
     st.write("")
@@ -1048,39 +1186,37 @@ elif st.session_state.page == "recall":
 
     phase = st.session_state.pr_phase
 
-    # Generate passage if not loaded
+    # Generate a NEW passage every time pr_passage is None
     if st.session_state.pr_passage is None:
         configured_cat = st.session_state.get("category_filter")
         cat = configured_cat if configured_cat else random.choice(PASSAGE_CATEGORIES)
-        with st.spinner("📝 Generating passage…"):
+        with st.spinner("📝 Generating new passage…"):
             data = generate_passage(client, cat)
-        st.session_state.pr_passage    = data["passage"]
-        st.session_state.pr_topic      = data.get("topic", "Reading Passage")
+        st.session_state.pr_passage = data["passage"]
+        st.session_state.pr_topic = data.get("topic", "Reading Passage")
         st.session_state.pr_start_time = time.time()
-        st.session_state.pr_phase      = "read"
-        st.session_state.pr_live_text  = ""
+        st.session_state.pr_phase = "read"
+        st.session_state.pr_live_text = ""
         st.rerun()
 
     passage = st.session_state.pr_passage
-    topic   = st.session_state.pr_topic
+    topic = st.session_state.pr_topic
 
-    # ════════════════════════════════════════════
-    #  PHASE 1 — READ  (30 seconds — TCS spec)
-    # ════════════════════════════════════════════
+    # ── PHASE 1 — READ (30 seconds per TCS spec) ───────────────────────────
     if phase == "read":
-        elapsed   = time.time() - st.session_state.pr_start_time
+        elapsed = time.time() - st.session_state.pr_start_time
         remaining = max(0.0, READ_TIME - elapsed)
 
         if remaining <= 0:
-            st.session_state.pr_phase      = "write"
+            st.session_state.pr_phase = "write"
             st.session_state.pr_start_time = time.time()
             st.rerun()
 
         st.markdown(
             '<div class="info-bar">📋 <b>TCS NQT Instructions:</b> Read the passage carefully. '
-            'You have <b>30 seconds</b>. The passage will disappear after the timer ends. '
-            'Then you will have <b>90 seconds</b> to rewrite it in your own words. '
-            'Your response will be scored on <b>content accuracy</b>, not word-for-word matching.</div>',
+            'You have <b>30 seconds</b>. The passage disappears when the timer ends. '
+            'Then you have <b>90 seconds</b> to rewrite it in your own words. '
+            'You are scored on <b>content accuracy and understanding</b>, not word-for-word matching.</div>',
             unsafe_allow_html=True,
         )
 
@@ -1091,8 +1227,8 @@ elif st.session_state.page == "recall":
             st.markdown(
                 f'<div class="passage-card">'
                 f'<b style="color:#B8A6FF;font-size:0.85rem;">TOPIC: {topic.upper()}</b>'
-                f'<div style="color:#8A8FA3;font-size:0.75rem;margin-bottom:12px;">{word_count} words</div>'
-                f'<div style="font-size:1.15rem;line-height:2.0;">{passage}</div>'
+                f'<div style="color:#8A8FA3;font-size:0.75rem;margin-bottom:12px;">{word_count} words · AI-generated · TCS NQT format (1–1.5 lines)</div>'
+                f'<div style="font-size:1.18rem;line-height:2.1;">{passage}</div>'
                 f'</div>',
                 unsafe_allow_html=True
             )
@@ -1104,11 +1240,9 @@ elif st.session_state.page == "recall":
         time.sleep(1)
         st.rerun()
 
-    # ════════════════════════════════════════════
-    #  PHASE 2 — WRITE  (90 seconds — TCS spec)
-    # ════════════════════════════════════════════
+    # ── PHASE 2 — WRITE (90 seconds per TCS spec) ─────────────────────────
     elif phase == "write":
-        elapsed   = time.time() - st.session_state.pr_start_time
+        elapsed = time.time() - st.session_state.pr_start_time
         remaining = max(0.0, WRITE_TIME - elapsed)
 
         if remaining <= 0:
@@ -1119,12 +1253,12 @@ elif st.session_state.page == "recall":
             st.session_state.pr_score_data = score_data
             st.session_state.pr_history.append({
                 "passage_num": st.session_state.pr_count + 1,
-                "topic":       topic,
-                "score":       score_data.get("score", 0),
-                "max_score":   score_data.get("max_score", 10),
-                "grade":       score_data.get("grade", "—"),
-                "user_text":   final_text,
-                "passage":     passage,
+                "topic": topic,
+                "score": score_data.get("score", 0),
+                "max_score": score_data.get("max_score", 10),
+                "grade": score_data.get("grade", "—"),
+                "user_text": final_text,
+                "passage": passage,
             })
             st.session_state.pr_count += 1
             st.session_state.pr_phase = "scored"
@@ -1133,7 +1267,7 @@ elif st.session_state.page == "recall":
         st.markdown(
             '<div class="info-bar">✍️ <b>Passage is now hidden.</b> '
             'Rewrite what you remember in your own words. '
-            'Show that you <b>understood the content</b> — focus on the main idea and key facts. '
+            'Focus on the <b>main idea and key facts</b> — specific numbers and details matter. '
             'Your work saves automatically when time ends.</div>',
             unsafe_allow_html=True,
         )
@@ -1148,14 +1282,14 @@ elif st.session_state.page == "recall":
 
             st.text_area(
                 "Reconstruct the passage in your own words:",
-                placeholder="Write what you remember — main idea + key details…",
+                placeholder="Write what you remember — the main idea, key facts, numbers, names…",
                 key="_recall_input",
                 on_change=_save_recall,
                 value=st.session_state.pr_live_text,
                 height=160,
             )
             words_typed = len(st.session_state.pr_live_text.strip().split()) if st.session_state.pr_live_text.strip() else 0
-            st.markdown(f'<p style="color:#8A8FA3;font-size:0.78rem;">Words: {words_typed}</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color:#8A8FA3;font-size:0.78rem;">Words typed: {words_typed}</p>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col2:
@@ -1172,12 +1306,12 @@ elif st.session_state.page == "recall":
             st.session_state.pr_score_data = score_data
             st.session_state.pr_history.append({
                 "passage_num": st.session_state.pr_count + 1,
-                "topic":       topic,
-                "score":       score_data.get("score", 0),
-                "max_score":   score_data.get("max_score", 10),
-                "grade":       score_data.get("grade", "—"),
-                "user_text":   final_text,
-                "passage":     passage,
+                "topic": topic,
+                "score": score_data.get("score", 0),
+                "max_score": score_data.get("max_score", 10),
+                "grade": score_data.get("grade", "—"),
+                "user_text": final_text,
+                "passage": passage,
             })
             st.session_state.pr_count += 1
             st.session_state.pr_phase = "scored"
@@ -1186,16 +1320,14 @@ elif st.session_state.page == "recall":
         time.sleep(1)
         st.rerun()
 
-    # ════════════════════════════════════════════
-    #  PHASE 3 — SCORED
-    # ════════════════════════════════════════════
+    # ── PHASE 3 — SCORED ───────────────────────────────────────────────────
     elif phase == "scored":
         sd = st.session_state.pr_score_data or {}
-        score     = sd.get("score", 0)
+        score = sd.get("score", 0)
         max_score = sd.get("max_score", 10)
-        grade     = sd.get("grade", "—")
-        pct       = round(100 * score / max_score) if max_score else 0
-        grade_color = {"A":"#00E0B8","B":"#7C5CFF","C":"#FFD700","D":"#FF9966","F":"#FF6B35"}.get(grade, "#8A8FA3")
+        grade = sd.get("grade", "—")
+        pct = round(100 * score / max_score) if max_score else 0
+        grade_color = {"A": "#00E0B8", "B": "#7C5CFF", "C": "#FFD700", "D": "#FF9966", "F": "#FF6B35"}.get(grade, "#8A8FA3")
 
         st.markdown(f'<span class="phase-badge phase-done">✅ SCORED — Passage {st.session_state.pr_count}</span>', unsafe_allow_html=True)
 
@@ -1211,19 +1343,19 @@ elif st.session_state.page == "recall":
                     <div style="color:#8A8FA3;font-size:0.8rem;">Score ({pct}%)</div>
                 </div>
                 <div style="flex:1;min-width:200px;">
-                    <p style="margin:0;color:#E4E4F0;"><b>Content Accuracy:</b><br>{sd.get('content_accuracy','—')}</p>
+                    <p style="margin:0;color:#E4E4F0;"><b>Content Accuracy:</b><br>{sd.get('content_accuracy', '—')}</p>
                 </div>
             </div>
         </div>""", unsafe_allow_html=True)
 
         covered = sd.get("key_points_covered", [])
-        missed  = sd.get("key_points_missed", [])
+        missed = sd.get("key_points_missed", [])
         if covered or missed:
             c_html = "".join(f'<li style="color:#6EE7B7;">✅ {p}</li>' for p in covered)
             m_html = "".join(f'<li style="color:#FCA5A5;">❌ {p}</li>' for p in missed)
             st.markdown(f"""
             <div class="lesson-box" style="margin-top:14px;">
-                <b style="color:#B8A6FF;">Key Points</b>
+                <b style="color:#B8A6FF;">Key Points Breakdown</b>
                 <ul style="margin-top:8px;">{c_html}{m_html}</ul>
             </div>""", unsafe_allow_html=True)
 
@@ -1234,7 +1366,13 @@ elif st.session_state.page == "recall":
             </div>""", unsafe_allow_html=True)
 
         with st.expander("📄 View Original Passage"):
-            st.markdown(f'<div class="passage-card">{passage}</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="passage-card">'
+                f'<b style="color:#B8A6FF;font-size:0.85rem;">ORIGINAL — {topic.upper()}</b>'
+                f'<div style="font-size:1.1rem;line-height:2.0;margin-top:10px;">{passage}</div>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
 
         with st.expander("✍️ Your Reconstruction"):
             user_txt = st.session_state.pr_submitted_text or "(nothing submitted)"
@@ -1242,10 +1380,11 @@ elif st.session_state.page == "recall":
 
         st.write("")
         if st.button("➡️ Next Passage"):
-            st.session_state.pr_passage    = None
+            # Clear passage — new one will be generated fresh by LLM
+            st.session_state.pr_passage = None
             st.session_state.pr_score_data = None
-            st.session_state.pr_phase      = "read"
-            st.session_state.pr_live_text  = ""
+            st.session_state.pr_phase = "read"
+            st.session_state.pr_live_text = ""
             st.session_state.pr_submitted_text = ""
             st.rerun()
 
@@ -1264,7 +1403,7 @@ elif st.session_state.page == "email":
         score_txt = "No emails yet"
 
     st.markdown(
-        f'<div class="score-pill">✉️ Email {em_count+1} &nbsp;|&nbsp; {score_txt} &nbsp;|&nbsp; {len(st.session_state.em_history)} done</div>',
+        f'<div class="score-pill">✉️ Email {em_count + 1} &nbsp;|&nbsp; {score_txt} &nbsp;|&nbsp; {len(st.session_state.em_history)} done</div>',
         unsafe_allow_html=True,
     )
     st.write("")
@@ -1283,33 +1422,32 @@ elif st.session_state.page == "email":
 
     phase = st.session_state.em_phase
 
-    # Load scenario if not loaded
+    # Generate a NEW scenario every time em_scenario is None
     if st.session_state.em_scenario is None:
-        st.session_state.em_scenario   = get_email_scenario()
-        st.session_state.em_phase      = "task"
-        st.session_state.em_live_text  = ""
+        with st.spinner("✉️ Generating email scenario…"):
+            st.session_state.em_scenario = generate_email_scenario(client)
+        st.session_state.em_phase = "task"
+        st.session_state.em_live_text = ""
 
     scenario = st.session_state.em_scenario
 
-    # ════════════════════════════════════════════
-    #  PHASE 1 — READ TASK (no timer — TCS shows it throughout)
-    # ════════════════════════════════════════════
+    # ── PHASE 1 — READ TASK ────────────────────────────────────────────────
     if phase == "task":
         st.markdown(
             '<div class="info-bar">✉️ <b>TCS NQT Email Writing Instructions:</b> '
             'Read the situation carefully. You will have <b>9 minutes</b> to write an email. '
-            'You must write <b>at least 100 words</b> in complete sentences. '
-            'Address all aspects of the situation.</div>',
+            'Write <b>at least 100 words</b> in complete sentences. '
+            'Address ALL aspects of the situation professionally.</div>',
             unsafe_allow_html=True,
         )
-        st.markdown('<span class="phase-badge phase-email">✉️ EMAIL WRITING</span>', unsafe_allow_html=True)
+        st.markdown('<span class="phase-badge phase-email">✉️ AI-GENERATED EMAIL TASK</span>', unsafe_allow_html=True)
         st.markdown(f"""
         <div class="email-card">
-            <b style="color:#FFD700;font-size:0.82rem;">SITUATION</b>
-            <p style="color:#E4E4F0;margin-top:8px;line-height:1.8;">{scenario['situation']}</p>
+            <b style="color:#FFD700;font-size:0.82rem;">📋 SITUATION</b>
+            <p style="color:#E4E4F0;margin-top:8px;line-height:1.85;">{scenario['situation']}</p>
             <hr style="border-color:#2e324a;margin:16px 0;">
-            <b style="color:#FFD700;font-size:0.82rem;">YOUR TASK</b>
-            <p style="color:#E4E4F0;margin-top:8px;line-height:1.8;">{scenario['task']}</p>
+            <b style="color:#FFD700;font-size:0.82rem;">📝 YOUR TASK</b>
+            <p style="color:#E4E4F0;margin-top:8px;line-height:1.85;">{scenario['task']}</p>
             <hr style="border-color:#2e324a;margin:16px 0;">
             <b style="color:#8A8FA3;font-size:0.78rem;">To:</b> <span style="color:#B8A6FF;">{scenario['to']}</span><br>
             <b style="color:#8A8FA3;font-size:0.78rem;">Subject hint:</b> <span style="color:#8A8FA3;font-style:italic;">{scenario['subject_hint']}</span>
@@ -1317,20 +1455,18 @@ elif st.session_state.page == "email":
         """, unsafe_allow_html=True)
 
         st.write("")
-        if st.button("🚀 Start Writing (9 min timer begins)"):
-            st.session_state.em_phase      = "writing"
+        if st.button("🚀 Start Writing (9-minute timer begins now)"):
+            st.session_state.em_phase = "writing"
             st.session_state.em_start_time = time.time()
-            st.session_state.em_live_text  = ""
+            st.session_state.em_live_text = ""
             st.rerun()
 
-    # ════════════════════════════════════════════
-    #  PHASE 2 — WRITE EMAIL  (540 seconds = 9 min)
-    # ════════════════════════════════════════════
+    # ── PHASE 2 — WRITE EMAIL (540 seconds = 9 minutes) ───────────────────
     elif phase == "writing":
-        elapsed   = time.time() - st.session_state.em_start_time
+        elapsed = time.time() - st.session_state.em_start_time
         remaining = max(0.0, EMAIL_TIME - elapsed)
-        minutes   = int(remaining) // 60
-        seconds   = int(remaining) % 60
+        minutes = int(remaining) // 60
+        seconds = int(remaining) % 60
 
         if remaining <= 0:
             final_text = st.session_state.em_live_text.strip()
@@ -1342,9 +1478,9 @@ elif st.session_state.page == "email":
             st.session_state.em_history.append({
                 "email_num": st.session_state.em_count + 1,
                 "situation": scenario['situation'][:80] + "…",
-                "score":     score_data.get("score", 0),
+                "score": score_data.get("score", 0),
                 "max_score": score_data.get("max_score", 10),
-                "grade":     score_data.get("grade", "—"),
+                "grade": score_data.get("grade", "—"),
                 "word_count": word_count,
                 "user_text": final_text,
             })
@@ -1352,10 +1488,8 @@ elif st.session_state.page == "email":
             st.session_state.em_phase = "scored"
             st.rerun()
 
-        # Show situation panel + writing area
-        st.markdown('<span class="phase-badge phase-email">✍️ WRITING — Time Remaining</span>', unsafe_allow_html=True)
+        st.markdown('<span class="phase-badge phase-email">✍️ WRITING — Timer Running</span>', unsafe_allow_html=True)
 
-        # Situation reminder (collapsed)
         with st.expander("📋 View Situation & Task", expanded=False):
             st.markdown(f"""
             <div style="background:#12162a;border-radius:10px;padding:16px;color:#E4E4F0;">
@@ -1364,7 +1498,6 @@ elif st.session_state.page == "email":
                 <b style="color:#8A8FA3;">To:</b> {scenario['to']}
             </div>""", unsafe_allow_html=True)
 
-        # Timer display — larger and prominent
         col_timer, col_words = st.columns([1, 3])
         with col_timer:
             warn_cls = "timer-warn" if remaining <= 60 else "timer-email"
@@ -1397,11 +1530,11 @@ elif st.session_state.page == "email":
         st.markdown('<div class="email-card">', unsafe_allow_html=True)
         st.text_area(
             f"Write your email to: {scenario['to']}",
-            placeholder=f"Start with a proper greeting...\n\nAddress the situation: {scenario['task'][:80]}...\n\nEnd with a professional closing.",
+            placeholder=f"Start with a proper greeting...\n\nAddress: {scenario['task'][:100]}...\n\nEnd with a professional closing and your name.",
             key="_email_input",
             on_change=_save_email,
             value=st.session_state.em_live_text,
-            height=320,
+            height=340,
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1416,9 +1549,9 @@ elif st.session_state.page == "email":
             st.session_state.em_history.append({
                 "email_num": st.session_state.em_count + 1,
                 "situation": scenario['situation'][:80] + "…",
-                "score":     score_data.get("score", 0),
+                "score": score_data.get("score", 0),
                 "max_score": score_data.get("max_score", 10),
-                "grade":     score_data.get("grade", "—"),
+                "grade": score_data.get("grade", "—"),
                 "word_count": word_count,
                 "user_text": final_text,
             })
@@ -1429,18 +1562,16 @@ elif st.session_state.page == "email":
         time.sleep(1)
         st.rerun()
 
-    # ════════════════════════════════════════════
-    #  PHASE 3 — SCORED
-    # ════════════════════════════════════════════
+    # ── PHASE 3 — SCORED ───────────────────────────────────────────────────
     elif phase == "scored":
         sd = st.session_state.em_score_data or {}
-        score     = sd.get("score", 0)
+        score = sd.get("score", 0)
         max_score = sd.get("max_score", 10)
-        grade     = sd.get("grade", "—")
-        pct       = round(100 * score / max_score) if max_score else 0
+        grade = sd.get("grade", "—")
+        pct = round(100 * score / max_score) if max_score else 0
         word_count = sd.get("word_count", 0)
-        meets_min  = sd.get("meets_minimum", False)
-        grade_color = {"A":"#00E0B8","B":"#7C5CFF","C":"#FFD700","D":"#FF9966","F":"#FF6B35"}.get(grade, "#8A8FA3")
+        meets_min = sd.get("meets_minimum", False)
+        grade_color = {"A": "#00E0B8", "B": "#7C5CFF", "C": "#FFD700", "D": "#FF9966", "F": "#FF6B35"}.get(grade, "#8A8FA3")
 
         st.markdown(f'<span class="phase-badge phase-done">✅ EMAIL EVALUATED — Email {st.session_state.em_count}</span>', unsafe_allow_html=True)
 
@@ -1463,19 +1594,18 @@ elif st.session_state.page == "email":
                 </div>
                 <div style="flex:1;min-width:200px;">
                     {min_badge}<br><br>
-                    <p style="margin:0;color:#E4E4F0;"><b>Task Completion:</b><br>{sd.get('task_completion','—')}</p>
+                    <p style="margin:0;color:#E4E4F0;"><b>Task Completion:</b><br>{sd.get('task_completion', '—')}</p>
                 </div>
             </div>
         </div>""", unsafe_allow_html=True)
 
-        # Detailed breakdown
         col_a, col_b = st.columns(2)
         with col_a:
             st.markdown(f"""
             <div class="lesson-box">
                 <b style="color:#B8A6FF;">📝 Tone & Structure</b>
-                <p style="margin-top:8px;"><b>Tone:</b> {sd.get('tone_assessment','—')}</p>
-                <p><b>Structure:</b> {sd.get('structure_assessment','—')}</p>
+                <p style="margin-top:8px;"><b>Tone:</b> {sd.get('tone_assessment', '—')}</p>
+                <p><b>Structure:</b> {sd.get('structure_assessment', '—')}</p>
             </div>""", unsafe_allow_html=True)
         with col_b:
             strengths = sd.get("strengths", [])
@@ -1507,10 +1637,11 @@ elif st.session_state.page == "email":
 
         st.write("")
         if st.button("➡️ Next Email Task"):
-            st.session_state.em_scenario       = None
-            st.session_state.em_score_data     = None
-            st.session_state.em_phase          = "task"
-            st.session_state.em_live_text      = ""
+            # Clear scenario — new one will be generated fresh by LLM
+            st.session_state.em_scenario = None
+            st.session_state.em_score_data = None
+            st.session_state.em_phase = "task"
+            st.session_state.em_live_text = ""
             st.session_state.em_submitted_text = ""
             st.rerun()
 
@@ -1526,13 +1657,13 @@ elif st.session_state.page == "recall_summary":
         grade_label = "🏆 Excellent!" if pct >= 80 else "👍 Good effort!" if pct >= 50 else "📚 Keep practising!"
         st.markdown(f"""
         <div class="question-card" style="text-align:center;">
-            <div class="big-title" style="font-size:2rem;">Passage Recall Summary</div>
+            <div class="big-title" style="font-size:2rem;">Passage Recall History</div>
             <p style="font-size:1.1rem;color:#E4E4F0;">{grade_label}<br>
             Average Score: <b style="color:#00E0B8;">{avg:.1f}</b>/10 across {len(history)} passages</p>
         </div>""", unsafe_allow_html=True)
         st.write("")
         for h in reversed(history):
-            g_color = {"A":"#00E0B8","B":"#7C5CFF","C":"#FFD700","D":"#FF9966","F":"#FF6B35"}.get(h["grade"],"#8A8FA3")
+            g_color = {"A": "#00E0B8", "B": "#7C5CFF", "C": "#FFD700", "D": "#FF9966", "F": "#FF6B35"}.get(h["grade"], "#8A8FA3")
             st.markdown(f"""
             <div style="background:#1c1f2e;border:1px solid #2e324a;border-radius:12px;padding:14px 20px;margin-bottom:10px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
                 <div style="font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:700;color:{g_color};min-width:40px;">{h['grade']}</div>
@@ -1555,7 +1686,7 @@ elif st.session_state.page == "recall_summary":
 elif st.session_state.page == "summary":
     total = st.session_state.total
     score = st.session_state.score
-    pct   = round(100 * score / total) if total else 0
+    pct = round(100 * score / total) if total else 0
     st.balloons()
     grade = "🏆 Excellent!" if pct >= 80 else "👍 Good effort!" if pct >= 50 else "📚 Keep practising!"
     st.markdown(f"""
@@ -1569,7 +1700,7 @@ elif st.session_state.page == "summary":
     if missed:
         st.write("")
         chips = "".join(f'<span class="missed-chip">{h["word"]}</span>' for h in missed)
-        st.markdown(f'<div class="lesson-box"><b style="color:#B8A6FF;">📚 Revise these:</b><br><br>{chips}</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="lesson-box"><b style="color:#B8A6FF;">📚 Revise these words:</b><br><br>{chips}</div>', unsafe_allow_html=True)
 
     st.write("")
     c1, c2, c3, c4 = st.columns(4)
